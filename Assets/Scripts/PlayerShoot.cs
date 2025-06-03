@@ -8,7 +8,7 @@ public class PlayerShoot : MonoBehaviour
 
     private float chargeTime = 0f;
     private bool isCharging = false;
-    private float requiredCharge = 3.0f; // 3•bˆÈã‚Å‹­‰»’e
+    private float requiredCharge = 2.0f; // 3•bˆÈã‚Å‹­‰»’e
 
     private SpriteRenderer sr; // ƒvƒŒƒCƒ„[‚ÌSpriteRenderer
 
@@ -45,7 +45,7 @@ public class PlayerShoot : MonoBehaviour
         // ƒ{ƒ^ƒ“—£‚µ‚½‚É”­Ë
         if (isCharging && Input.GetKeyUp(KeyCode.X))
         {
-            Shoot(chargeTime >= requiredCharge); // 3•bˆÈã‚È‚ç‹­‰»’e
+            Shoot(chargeTime >= requiredCharge); // 2•bˆÈã‚È‚ç‹­‰»’e
             isCharging = false;
             chargeTime = 0f;
             if (sr != null) sr.color = Color.white; // F‚ğ–ß‚·
@@ -68,7 +68,7 @@ public class PlayerShoot : MonoBehaviour
             if (powered)
             {
                 pb.damage = 3; // ƒ_ƒ[ƒW3
-                bullet.transform.localScale *= 3f; // ‘å‚«‚­‚·‚é
+                bullet.transform.localScale *= 4f; // ‘å‚«‚­‚·‚é
             }
             else
             {

@@ -8,6 +8,7 @@ public class PlayerBullet : MonoBehaviour
     {
         if (other.CompareTag("Enemy"))
         {
+            Debug.Log("弾が敵に当たった！" + Time.time);
             // Enemyスクリプト（仮）にダメージ処理
             Enemy enemy = other.GetComponent<Enemy>();
             if (enemy != null)
