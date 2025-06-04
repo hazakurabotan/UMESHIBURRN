@@ -3,41 +3,40 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-// プレイヤーの行動やHP管理をするメインスクリプト
 public class PlayerController : MonoBehaviour
 {
-    Rigidbody2D rbody; // プレイヤーの物理制御用
-    float axisH = 0.0f; // 左右キー入力値
-    float axisV = 0.0f; // 上下キー入力値
-    public float speed = 3.0f; // 歩きスピード
-    public float jump = 9.0f;  // ジャンプ力
-    public LayerMask groundLayer; // 地面の判定用
-    bool goJump = false; // ジャンプ要求フラグ
+    Rigidbody2D rbody;
+    float axisH = 0.0f;
+    float axisV = 0.0f;
+    public float speed = 3.0f;
+    public float jump = 9.0f;
+    public LayerMask groundLayer;
+    bool goJump = false;
 
-    SpriteRenderer sr;   // プレイヤーの画像描画コンポーネント
-    float invincibleTimer = 0f; // 無敵時間カウンタ
-    public float invincibleTime = 3f; // ダメージ後の無敵時間
+    SpriteRenderer sr;
+    float invincibleTimer = 0f;
+    public float invincibleTime = 3f;
 
-    public AudioSource audioSource;   // 効果音を鳴らすAudioSource（Inspectorでセット）
-    public AudioClip deathClip;       // 死亡時の効果音（Inspectorでセット）
-    public HpBarController hpBar; // HPバー用スクリプト（Inspectorでセット）
+    public AudioSource audioSource;
+    public AudioClip deathClip;
+    public HpBarController hpBar;
 
-    public int maxHP = 3; // 最大HP
-    int currentHP;        // 現在のHP
+    public int maxHP = 3;
+    int currentHP;
 
-    public float dashSpeed = 6.0f;        // ダッシュスピード
-    public float dashDoubleTapTime = 0.3f;// ダブルタップ受付時間
-    float lastLeftTapTime = -1f;          // 左キー最後に押した時刻
-    float lastRightTapTime = -1f;         // 右キー最後に押した時刻
-    bool isDashing = false;               // ダッシュ状態かどうか
+    public float dashSpeed = 6.0f;
+    public float dashDoubleTapTime = 0.3f;
+    float lastLeftTapTime = -1f;
+    float lastRightTapTime = -1f;
+    bool isDashing = false;
 
-    public GameObject afterImagePrefab;   // 残像エフェクトのPrefab（Inspectorでセット）
-    public float afterImageInterval = 0.05f; // 残像が出る間隔（秒）
-    private float afterImageTimer = 0f;       // 残像タイマー
+    public GameObject afterImagePrefab;
+    public float afterImageInterval = 0.05f;
+    private float afterImageTimer = 0f;
 
-    public TextMeshProUGUI hpText;           // HPのテキスト表示
+    public TextMeshProUGUI hpText;
 
-    Animator animator;    // アニメーター
+    Animator animator;
     public string stopAnime = "PlayerStop";
     public string moveAnime = "PlayerMove";
     public string jumpAnime = "PlayerJump";
@@ -46,52 +45,48 @@ public class PlayerController : MonoBehaviour
     string nowAnime = "";
     string oldAnime = "";
 
-    public int score = 0; // スコア
-
-    public GameObject ropePrefab; // ロープ用プレハブ
-    public Transform ropeSpawnPoint; // ロープ発射位置
-    float ropeCooldown = 1f; // ロープ連射クールタイム
+    public int score = 0;
+    public GameObject ropePrefab;
+    public Transform ropeSpawnPoint;
+    float ropeCooldown = 1f;
     bool canShootRope = true;
 
-    bool onLadder = false; // ハシゴ上にいるか
-    public float climbSpeed = 3f; // ハシゴ登るスピード
+    bool onLadder = false;
+    public float climbSpeed = 3f;
 
-    public static string gameState = "playing"; // ゲーム状態（static）
+    public static string gameState = "playing";
 
-    // --- ノックバック用変数 ---
     Vector2 knockbackVelocity = Vector2.zero;
     float knockbackTimer = 0f;
     float knockbackDuration = 0.2f;
 
-    // ゲーム開始時に一度呼ばれる
     void Start()
     {
-        rbody = GetComponent<Rigidbody2D>();      // Rigidbody2Dを取得
-        animator = GetComponent<Animator>();      // Animatorを取得
-        sr = GetComponent<SpriteRenderer>();      // SpriteRendererを取得 ★これがnullだと色操作できない
-        Debug.Log("SpriteRenderer: " + sr);       // ★ちゃんと取得できてるか確認
+        rbody = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+        sr = GetComponent<SpriteRenderer>();
+        Debug.Log("SpriteRenderer: " + sr);
 
         nowAnime = stopAnime;
         oldAnime = stopAnime;
         gameState = "playing";
 
-        currentHP = maxHP;     // HPを満タンに
-        UpdateHpUI();          // HPゲージ更新
+        currentHP = maxHP;
+        UpdateHpUI();
     }
 
     void Update()
     {
-        if (gameState != "playing") return; // ゲームプレイ中以外は動かない
+        if (gameState != "playing") return;
 
-        // 入力取得
         axisH = Input.GetAxisRaw("Horizontal");
         axisV = Input.GetAxisRaw("Vertical");
 
-        // --- ダッシュ（2回押し検出） ---
+        // ダッシュ
         if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
         {
             if (Time.time - lastLeftTapTime < dashDoubleTapTime)
-                isDashing = true; // 2回押しならダッシュ
+                isDashing = true;
             else
                 isDashing = false;
             lastLeftTapTime = Time.time;
@@ -104,11 +99,10 @@ public class PlayerController : MonoBehaviour
                 isDashing = false;
             lastRightTapTime = Time.time;
         }
-        // どちらかの方向キーを離したらダッシュ解除
         if (Input.GetKeyUp(KeyCode.LeftArrow) || Input.GetKeyUp(KeyCode.RightArrow) || Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.D))
             isDashing = false;
 
-        // --- 残像エフェクト ---
+        // 残像エフェクト
         void CreateAfterImage()
         {
             var obj = Instantiate(afterImagePrefab, transform.position, transform.rotation);
@@ -116,7 +110,7 @@ public class PlayerController : MonoBehaviour
             var mySr = GetComponent<SpriteRenderer>();
             sr.sprite = mySr.sprite;
             sr.flipX = mySr.flipX;
-            sr.color = new Color(1f, 1f, 1f, 0.5f); // 半透明
+            sr.color = new Color(1f, 1f, 1f, 0.5f);
         }
         if (isDashing)
         {
@@ -145,37 +139,51 @@ public class PlayerController : MonoBehaviour
             StartCoroutine(ShootRopeWithCooldown());
         }
 
-        // ハシゴの上までいったら次のシーン
+        // ハシゴでシーン移動
         if (onLadder && transform.position.y >= 5.5f)
         {
             SceneManager.LoadScene("Stage2");
         }
 
-        // --- 無敵時の点滅演出（ここが重要！） ---
+        // 無敵タイマー進行だけここで管理
         if (invincibleTimer > 0f)
         {
             invincibleTimer -= Time.deltaTime;
+        }
+    }
 
-            // ここでAnimator一時停止
-            animator.enabled = false;
+    // LateUpdateで全ての色制御を一元化
+    void LateUpdate()
+    {
+        PlayerShoot shoot = GetComponent<PlayerShoot>();
 
-            // 点滅（黄色）
+        if (invincibleTimer > 0f)
+        {
+            // 無敵中点滅（優先度最上位）
             float blink = Mathf.Repeat(invincibleTimer * 10f, 1f);
-            if (blink < 0.5f)
-                sr.color = Color.yellow;
+            sr.color = (blink < 0.5f) ? Color.yellow : new Color(1, 1, 0, 0);
+        }
+        else if (shoot != null && shoot.isCharging)
+        {
+            // チャージ中点滅（無敵でなければ）
+            float blink = Mathf.PingPong(Time.time * 3f, 1f);
+            if (shoot.chargeTime >= shoot.requiredCharge)
+                sr.color = (blink < 0.5f) ? Color.red : new Color(1f, 1f, 1f, 0.4f);
             else
-                sr.color = new Color(1, 1, 0, 0);
+                sr.color = (blink < 0.5f) ? Color.blue : new Color(1f, 1f, 1f, 0.4f);
         }
         else
         {
-            // 無敵解除したらAnimator復活
-            animator.enabled = true;
+            // 通常時
             sr.color = Color.white;
         }
-
     }
 
-    // ロープクールタイム
+    public bool IsInvincible()
+    {
+        return invincibleTimer > 0f;
+    }
+
     IEnumerator ShootRopeWithCooldown()
     {
         canShootRope = false;
@@ -196,7 +204,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        float currentSpeed = isDashing ? dashSpeed : speed; // ダッシュか通常かでスピード変更
+        float currentSpeed = isDashing ? dashSpeed : speed;
 
         if (onLadder)
         {
@@ -228,7 +236,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // 何かに当たったとき
     void OnTriggerEnter2D(Collider2D col)
     {
         if (col.CompareTag("Ladder"))
@@ -254,7 +261,6 @@ public class PlayerController : MonoBehaviour
         }
         else if (col.CompareTag("Enemy"))
         {
-            // ノックバック
             Vector2 knockDir = (transform.position - col.transform.position).normalized;
             float knockPower = 8f;
             knockbackVelocity = knockDir * knockPower;
@@ -291,7 +297,6 @@ public class PlayerController : MonoBehaviour
         GetComponent<CapsuleCollider2D>().enabled = false;
         rbody.AddForce(Vector2.up * 5, ForceMode2D.Impulse);
 
-        // 死亡効果音を再生
         if (audioSource != null && deathClip != null)
         {
             audioSource.PlayOneShot(deathClip);
@@ -303,18 +308,17 @@ public class PlayerController : MonoBehaviour
         rbody.velocity = Vector2.zero;
     }
 
-    // ★ダメージを受けたらHP減らす＋無敵タイマーセット
     public void TakeDamage(int damage)
     {
         if (gameState != "playing") return;
-        if (invincibleTimer > 0f) return; // 無敵中は無視
+        if (invincibleTimer > 0f) return;
         Debug.Log("ダメージ受けた！");
         currentHP -= damage;
         currentHP = Mathf.Clamp(currentHP, 0, maxHP);
         UpdateHpUI();
         if (currentHP <= 0) GameOver();
 
-        invincibleTimer = invincibleTime; // 無敵スタート
+        invincibleTimer = invincibleTime;
     }
 
     void UpdateHpUI()

@@ -2,44 +2,30 @@ using UnityEngine;
 
 public class PlayerShoot : MonoBehaviour
 {
-    public GameObject bulletPrefab;  // 弾のプレハブ
-    public Transform firePoint;      // 発射位置
-    public float bulletSpeed = 5f;   // 弾の速度
+    public GameObject bulletPrefab;    // 弾のプレハブ
+    public Transform firePoint;        // 発射位置
+    public float bulletSpeed = 5f;     // 弾の速度
 
-    private float chargeTime = 0f;
-    private bool isCharging = false;
-    private float requiredCharge = 2.0f; // 3秒以上で強化弾
-
-    private SpriteRenderer sr; // プレイヤーのSpriteRenderer
-
-    void Start()
-    {
-        sr = GetComponent<SpriteRenderer>();
-    }
+    [HideInInspector] public float chargeTime = 0f; // チャージ中の時間（PlayerControllerが参照）
+    [HideInInspector] public bool isCharging = false; // チャージ中かどうか（PlayerControllerが参照）
+    public float requiredCharge = 2.0f; // 2秒以上で強化弾（PlayerControllerが参照）
 
     void Update()
     {
-        // Xボタン押し始め
+        // 無敵演出中も含めて色操作はPlayerControllerに任せる（ここではしない）
+
+        // Xボタン押し始めたらチャージ開始
         if (Input.GetKeyDown(KeyCode.X))
         {
             isCharging = true;
             chargeTime = 0f;
         }
 
-        // 押してる間はカウント＋点滅演出
+        // チャージ中
         if (isCharging && Input.GetKey(KeyCode.X))
         {
             chargeTime += Time.deltaTime;
-
-            // 点滅
-            if (sr != null)
-            {
-                float blink = Mathf.PingPong(Time.time * 10f, 1f);
-                if (chargeTime >= requiredCharge)
-                    sr.color = Color.red; // 強化弾なら赤く点滅
-                else
-                    sr.color = Color.yellow;
-            }
+            // 色はPlayerController.LateUpdateで点滅制御
         }
 
         // ボタン離した時に発射
@@ -48,7 +34,7 @@ public class PlayerShoot : MonoBehaviour
             Shoot(chargeTime >= requiredCharge); // 2秒以上なら強化弾
             isCharging = false;
             chargeTime = 0f;
-            if (sr != null) sr.color = Color.white; // 色を戻す
+            // 色もここでは触らない
         }
     }
 
@@ -58,7 +44,7 @@ public class PlayerShoot : MonoBehaviour
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
         PlayerBullet pb = bullet.GetComponent<PlayerBullet>();
 
-        // 右向き or 左向き
+        // プレイヤーの向きで左右に撃つ
         float direction = transform.localScale.x > 0 ? 1f : -1f;
         if (rb != null)
             rb.velocity = new Vector2(direction * bulletSpeed, 0f);
@@ -67,14 +53,12 @@ public class PlayerShoot : MonoBehaviour
         {
             if (powered)
             {
-                pb.damage = 3; // ダメージ3
-                bullet.transform.localScale *= 4f; // 大きくする
+                pb.damage = 3; // 強化弾
+                bullet.transform.localScale *= 4f;
             }
             else
             {
-                pb.damage = 1;
-                // 通常の大きさ（念のためリセットもOK）
-                // bullet.transform.localScale = Vector3.one;
+                pb.damage = 1; // 通常弾
             }
         }
 
