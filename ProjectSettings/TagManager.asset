@@ -13,6 +13,7 @@ TagManager:
   - Ladder
   - Block
   - Ground
+  - Boss
   layers:
   - Default
   - TransparentFX

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class BossSimpleJump : MonoBehaviour
 {
@@ -17,8 +18,12 @@ public class BossSimpleJump : MonoBehaviour
     private Rigidbody2D rb;
     private SpriteRenderer sr;
 
+    public int maxHP = 10;
+    int currentHP;
+
     void Start()
     {
+        currentHP = maxHP;
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
         timer = 0f;
@@ -91,4 +96,33 @@ public class BossSimpleJump : MonoBehaviour
     {
         return Mathf.Abs(rb.velocity.y) < 0.05f;
     }
+
+    public void TakeDamage(int amount)
+    {
+        currentHP -= amount;
+        var dialogManager = FindObjectOfType<DialogManager>();
+        Debug.Log("dialogManager: " + dialogManager);
+        if (dialogManager != null && dialogManager.bossHPPanel.activeSelf)
+        {
+            Debug.Log("bossHPText: " + dialogManager.bossHPText);
+            if (dialogManager.bossHPText != null)
+            {
+                dialogManager.bossHPText.text = "HP: " + currentHP;
+                Debug.Log("書き換え直後のText: " + dialogManager.bossHPText.text);
+            }
+        }
+        Debug.Log("現在のボスHP: " + currentHP);
+
+        if (currentHP <= 0)
+        {
+            Die();
+        }
+    }
+
+    void Die()
+    {
+        // リザルト画面に遷移
+        SceneManager.LoadScene("Resuit"); // ※ResultSceneは自分のリザルトシーン名
+    }
+
 }

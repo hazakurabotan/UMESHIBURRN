@@ -9,17 +9,31 @@ public class PlayerBullet : MonoBehaviour
         if (other.CompareTag("Enemy"))
         {
             Debug.Log("弾が敵に当たった！" + Time.time);
-            // Enemyスクリプト（仮）にダメージ処理
             Enemy enemy = other.GetComponent<Enemy>();
             if (enemy != null)
             {
-                enemy.TakeDamage(damage); // 敵にダメージを与える（敵スクリプト要作成）
+                enemy.TakeDamage(damage);
             }
-            Destroy(this.gameObject); // 弾は消す
+            Destroy(this.gameObject);
         }
-        else if (!other.isTrigger && !other.CompareTag("Player"))
+        // ▼ここを追加！
+        else if (other.CompareTag("Boss"))
         {
-            Destroy(this.gameObject); // 壁等に当たったら消す
+            Debug.Log("弾がボスに当たった！" + Time.time);
+            // まず自分、次に親にもBossSimpleJumpがあるか探す
+            BossSimpleJump boss = other.GetComponent<BossSimpleJump>();
+            if (boss == null) boss = other.GetComponentInParent<BossSimpleJump>();
+
+            if (boss != null)
+            {
+                Debug.Log("TakeDamage呼び出し！");
+                boss.TakeDamage(damage);
+            }
+            else
+            {
+                Debug.Log("BossSimpleJumpが見つからない");
+            }
+            Destroy(this.gameObject);
         }
     }
 }

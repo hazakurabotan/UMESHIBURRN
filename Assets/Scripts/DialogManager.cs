@@ -10,6 +10,11 @@ public class DialogManager : MonoBehaviour
     public string[] sentences; // 表示したい会話文
     int currentSentence = 0;
     bool isTalking = false;
+    public GameObject wallLeft;
+    public GameObject wallRight;
+    public GameObject bossHPPanel; // HP表示UIパネル
+    public TextMeshProUGUI bossHPText;
+
 
     void Update()
     {
@@ -63,8 +68,16 @@ public class DialogManager : MonoBehaviour
     {
         dialogPanel.SetActive(false);
         isTalking = false;
-        // ここで「ボス起動」などイベント続行
+
+        // 壁を出す
+        if (wallLeft != null) wallLeft.SetActive(true);
+        if (wallRight != null) wallRight.SetActive(true);
+
+        // ボスHPパネルを表示
+        if (bossHPPanel != null) bossHPPanel.SetActive(true);
+
         FindObjectOfType<BossSimpleJump>().isActive = true;
         FindObjectOfType<PlayerController>().enabled = true;
     }
+
 }
