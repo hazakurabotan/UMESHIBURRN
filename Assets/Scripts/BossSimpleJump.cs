@@ -1,12 +1,13 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class BossSimpleJump : MonoBehaviour
 {
     public float moveSpeed = 2f;
     public float moveTime = 2f;
-    public float jumpPower = 7f;     // ƒWƒƒƒ“ƒv‚Ì‹­‚³
-    public float jumpSpeed = 4f;     // ƒWƒƒƒ“ƒv’†‚Ì‰¡‘¬“x
+    public float jumpPower = 7f;     // ã‚¸ãƒ£ãƒ³ãƒ—ã®å¼·ã•
+    public float jumpSpeed = 4f;     // ã‚¸ãƒ£ãƒ³ãƒ—ä¸­ã®æ¨ªé€Ÿåº¦
     public float standTime = 1f;
+    public bool isActive = false; // â†ã‚³ãƒ¬ã§ãƒœã‚¹ã®ON/OFFåˆ¶å¾¡
 
     private int moveDir = -1;
     private float timer = 0f;
@@ -26,34 +27,37 @@ public class BossSimpleJump : MonoBehaviour
 
     void Update()
     {
+        if (!isActive) return; // isActive=falseã®é–“ã¯ä½•ã‚‚ã—ãªã„
+
+
         switch (state)
         {
-            case 0: // •à‚­
+            case 0: // æ­©ã
                 timer += Time.deltaTime;
                 rb.velocity = new Vector2(moveSpeed * moveDir, rb.velocity.y);
 
                 if (timer >= moveTime)
                 {
                     timer = 0f;
-                    state = 1; // ƒWƒƒƒ“ƒv‚Ö
+                    state = 1; // ã‚¸ãƒ£ãƒ³ãƒ—ã¸
                     float dx = (sr != null ? sr.bounds.size.x * 5f : 5f);
                     jumpTargetX = transform.position.x + dx * moveDir;
-                    // **‰¡‘¬“x‚Íˆê’èAã•ûŒü‚¾‚¯ƒWƒƒƒ“ƒv—Í‚ğ‰Á‚¦‚é**
+                    // **æ¨ªé€Ÿåº¦ã¯ä¸€å®šã€ä¸Šæ–¹å‘ã ã‘ã‚¸ãƒ£ãƒ³ãƒ—åŠ›ã‚’åŠ ãˆã‚‹**
                     rb.velocity = new Vector2(jumpSpeed * moveDir, jumpPower);
                     isJumping = true;
                 }
                 break;
 
-            case 1: // ƒWƒƒƒ“ƒv’†
-                // **ƒWƒƒƒ“ƒv’†‚à‰¡‘¬“x‚ğŒÅ’èi•K—v‚È‚çj**
+            case 1: // ã‚¸ãƒ£ãƒ³ãƒ—ä¸­
+                // **ã‚¸ãƒ£ãƒ³ãƒ—ä¸­ã‚‚æ¨ªé€Ÿåº¦ã‚’å›ºå®šï¼ˆå¿…è¦ãªã‚‰ï¼‰**
                 if (isJumping)
                 {
                     rb.velocity = new Vector2(jumpSpeed * moveDir, rb.velocity.y);
-                    // **ƒWƒƒƒ“ƒv‹——£“’Bƒ`ƒFƒbƒN**
+                    // **ã‚¸ãƒ£ãƒ³ãƒ—è·é›¢åˆ°é”ãƒã‚§ãƒƒã‚¯**
                     if ((moveDir == -1 && transform.position.x <= jumpTargetX) ||
                         (moveDir == 1 && transform.position.x >= jumpTargetX))
                     {
-                        // –Ú•W‚É“’B‚µ‚½‚çXÀ•W‚ğ•â³‚µ‚Ä’â~
+                        // ç›®æ¨™ã«åˆ°é”ã—ãŸã‚‰Xåº§æ¨™ã‚’è£œæ­£ã—ã¦åœæ­¢
                         Vector2 pos = transform.position;
                         pos.x = jumpTargetX;
                         transform.position = pos;
@@ -66,11 +70,11 @@ public class BossSimpleJump : MonoBehaviour
                     isJumping = false;
                     rb.velocity = Vector2.zero;
                     timer = 0f;
-                    state = 2; // ’â~ó‘Ô‚Ö
+                    state = 2; // åœæ­¢çŠ¶æ…‹ã¸
                 }
                 break;
 
-            case 2: // ’…’nŒã1•b’â~
+            case 2: // ç€åœ°å¾Œ1ç§’åœæ­¢
                 rb.velocity = Vector2.zero;
                 timer += Time.deltaTime;
                 if (timer >= standTime)
