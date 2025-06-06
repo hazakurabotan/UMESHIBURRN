@@ -963,6 +963,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -7726150080937727510, guid: 33100922c82e15240bca615bdcc361d3, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: -7057538813773096741, guid: 33100922c82e15240bca615bdcc361d3, type: 3}
       propertyPath: bossHpBar
       value: 
@@ -1304,7 +1308,7 @@ GameObject:
   - component: {fileID: 587038849}
   m_Layer: 0
   m_Name: WallRight
-  m_TagString: Boss
+  m_TagString: Talk
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1682,7 +1686,7 @@ GameObject:
   - component: {fileID: 998806396}
   m_Layer: 0
   m_Name: WallLeft
-  m_TagString: Boss
+  m_TagString: Talk
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
