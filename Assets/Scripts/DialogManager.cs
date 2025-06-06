@@ -2,44 +2,56 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
+
+// 1行ぶんの情報をまとめるクラス
+[System.Serializable]
+public class DialogLine
+{
+    public string speakerName;   // 発言者名
+    public Sprite speakerIcon;   // アイコン画像
+    public string text;          // セリフ本文
+}
 
 public class DialogManager : MonoBehaviour
 {
-    public GameObject dialogPanel; // Panelへの参照
-    public TextMeshProUGUI dialogText; // テキスト
-    public string[] sentences; // 表示したい会話文
+    public GameObject dialogPanel;
+    public TextMeshProUGUI dialogText;
+    public TextMeshProUGUI nameText;
+    public Image iconImage;
+
+    public DialogLine[] dialogLines;  // Inspectorで編集
     int currentSentence = 0;
     bool isTalking = false;
+
     public GameObject wallLeft;
     public GameObject wallRight;
-    public GameObject bossHPPanel; // HP表示UIパネル
+    public GameObject bossHPPanel;
     public TextMeshProUGUI bossHPText;
-
 
     void Update()
     {
-        if (isTalking && Input.GetKeyDown(KeyCode.Z)) // Zキーで進める例
+        // 会話中のみZキーで次のセリフ
+        if (isTalking && Input.GetKeyDown(KeyCode.Z))
         {
             NextSentence();
         }
     }
 
-    // ←ここだけにStartDialogを1つ残す！
-    public void StartDialog(string[] lines)
+    // ここがメソッド宣言！！
+    public void StartDialog(DialogLine[] lines)
     {
-        // プレイヤーを完全停止させる
+        // ★ここでプレイヤーを止める
         var player = GameObject.FindWithTag("Player");
         if (player != null)
         {
             var rb = player.GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                rb.velocity = Vector2.zero; // 物理速度をゼロに！
-                rb.angularVelocity = 0f;    // 回転も止めたい場合
-            }
+            var pc = player.GetComponent<PlayerController>();
+            if (rb != null) rb.velocity = Vector2.zero;   // 慣性も完全ストップ！
+            if (pc != null) pc.enabled = false;           // コントローラーも止める
         }
 
-        sentences = lines;
+        dialogLines = lines;
         currentSentence = 0;
         dialogPanel.SetActive(true);
         isTalking = true;
@@ -48,9 +60,14 @@ public class DialogManager : MonoBehaviour
 
     void ShowSentence()
     {
-        if (currentSentence < sentences.Length)
+        if (currentSentence < dialogLines.Length)
         {
-            dialogText.text = sentences[currentSentence];
+            var line = dialogLines[currentSentence];
+
+            dialogText.text = line.text;
+            nameText.text = line.speakerName;
+            iconImage.sprite = line.speakerIcon;
+            iconImage.enabled = (line.speakerIcon != null);
         }
         else
         {
@@ -69,15 +86,11 @@ public class DialogManager : MonoBehaviour
         dialogPanel.SetActive(false);
         isTalking = false;
 
-        // 壁を出す
         if (wallLeft != null) wallLeft.SetActive(true);
         if (wallRight != null) wallRight.SetActive(true);
-
-        // ボスHPパネルを表示
         if (bossHPPanel != null) bossHPPanel.SetActive(true);
 
         FindObjectOfType<BossSimpleJump>().isActive = true;
         FindObjectOfType<PlayerController>().enabled = true;
     }
-
 }

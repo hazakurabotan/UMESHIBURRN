@@ -18,6 +18,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Stage2.unity
     guid: e470bc5bfeaee6d40b92ae4ac5383f5e
   - enabled: 1
+    path: Assets/Scenes/shop.unity
+    guid: e39af984fe693e643ac52553db5e87c2
+  - enabled: 1
     path: Assets/Scenes/Resuit.unity
     guid: bee9cc6090e712548828858dfe1d1701
   - enabled: 0

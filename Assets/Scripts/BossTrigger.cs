@@ -4,7 +4,7 @@ public class BossTrigger : MonoBehaviour
 {
     public BossSimpleJump boss;
     public DialogManager dialogManager;
-    public string[] dialogLines; // Inspector‚ÅƒZƒŠƒt“o˜^
+    public DialogLine[] dialogLines; // Inspector‚ÅƒZƒŠƒt“o˜^
 
     bool hasTriggered = false;
 
