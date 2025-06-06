@@ -17,6 +17,7 @@ public class PlayerBullet : MonoBehaviour
             Destroy(this.gameObject);
         }
         // ▼ここを追加！
+        // ここで「当たった相手のタグが"Boss"だけ」に限定
         else if (other.CompareTag("Boss"))
         {
             Debug.Log("弾がボスに当たった！" + Time.time);
