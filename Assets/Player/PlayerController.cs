@@ -321,6 +321,15 @@ public class PlayerController : MonoBehaviour
         invincibleTimer = invincibleTime;
     }
 
+    public void Heal(int amount)
+    {
+        currentHP += amount;
+        currentHP = Mathf.Clamp(currentHP, 0, maxHP);
+        UpdateHpUI();
+        Debug.Log("âÒïúÅI åªç›ÇÃHP: " + currentHP);
+    }
+
+
     void UpdateHpUI()
     {
         if (hpBar != null)
