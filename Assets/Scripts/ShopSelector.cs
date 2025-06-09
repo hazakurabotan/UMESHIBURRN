@@ -17,7 +17,12 @@ public class ShopSelector : MonoBehaviour
 
     void Update()
     {
+        // 選択モードじゃないなら無効化
         if (!selecting) return;
+
+        // ↓確認パネルがアクティブな場合は何も操作しない
+        if (GameObject.Find("ConfirmPanel") != null && GameObject.Find("ConfirmPanel").activeSelf)
+            return;
 
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
@@ -33,7 +38,7 @@ public class ShopSelector : MonoBehaviour
         {
             // 確認ダイアログ表示
             FindObjectOfType<ShopManager>().ShowConfirm(selectIndex);
-            selecting = false;
+            selecting = false; // ここで選択無効化
         }
     }
 

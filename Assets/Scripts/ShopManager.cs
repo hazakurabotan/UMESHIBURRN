@@ -1,5 +1,6 @@
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
+using static UnityEditor.Progress;
 
 public class ShopManager : MonoBehaviour
 {
@@ -8,7 +9,12 @@ public class ShopManager : MonoBehaviour
     public GameObject confirmPanel;
     int currentItemIndex;
 
-    // 会話・選択の流れ制御（ステートマシン的にやると楽！）
+    void Start()
+    {
+        StartCoroutine(ShopFlow());
+    }
+
+    // 会話・選択の流れ制御
     IEnumerator ShopFlow()
     {
         twText.ShowText("ようこそ、いらっしゃい");
@@ -18,26 +24,28 @@ public class ShopManager : MonoBehaviour
         yield return WaitZ();
 
         selector.StartSelect();
-        yield return new WaitUntil(() => selector.selecting == false); // 選択が終わるまで待機
-
-        // 決定時に↓を呼ばれる
-        // ShowConfirm(selectedIndex)
+        yield return new WaitUntil(() => selector.selecting == false);
+        // 決定時 ShowConfirm(selectedIndex)を呼ぶ
     }
 
     public void ShowConfirm(int idx)
     {
         currentItemIndex = idx;
-        confirmPanel.SetActive(true); // 「こちらでいいですか？」UIをON
+        confirmPanel.SetActive(true);
         // ハイ/イイエのボタンにメソッド割り当て
     }
 
     public void OnConfirmYes()
     {
-        // 商品消す
         selector.items[currentItemIndex].gameObject.SetActive(false);
         confirmPanel.SetActive(false);
 
-        // 最後の会話
+        // 例：ShopManagerやOnConfirmYesなどで
+        PlayerInventory.obtainedItems.Add(currentItemIndex);  // ←ここ！
+
+        Debug.Log("現在のPlayerInventory: " + string.Join(",", PlayerInventory.obtainedItems));
+
+
         StartCoroutine(EndTalk());
     }
 
@@ -51,11 +59,10 @@ public class ShopManager : MonoBehaviour
     {
         twText.ShowText("それでいい？じゃあがんばって");
         yield return WaitZ();
-        // シーン戻る
+        SceneTransitionInfo.cameFromShop = true;
         UnityEngine.SceneManagement.SceneManager.LoadScene("Stage2");
     }
 
-    // Z待ちコルーチン
     IEnumerator WaitZ()
     {
         while (!Input.GetKeyDown(KeyCode.Z)) yield return null;
