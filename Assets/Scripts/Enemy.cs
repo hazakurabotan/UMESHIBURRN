@@ -1,40 +1,45 @@
 using UnityEngine;
 
+// 敵キャラクター用の基本スクリプト
 public class Enemy : MonoBehaviour
 {
-    public int hp = 3;
-    public bool isGrabbed = false;
-    public bool isFlying = false;
+    public int hp = 3;               // 敵の体力（HP）
+    public bool isGrabbed = false;   // 掴まれている状態か（つかみアクション用フラグ）
+    public bool isFlying = false;    // 飛んでいる状態か（投げられ中など）
 
-    private bool recentlyHit = false;  // ★追加
+    private bool recentlyHit = false;  // 連続ヒット防止用フラグ
 
+    // ======= ダメージ処理 =======
     public void TakeDamage(int amount)
     {
-        // 連続ヒット防止
-        if (recentlyHit) return;           // すでにヒット中なら無視
-        recentlyHit = true;                // これ以上のヒットを防止
-        Invoke(nameof(ResetHit), 0.05f);   // 0.05秒後に解除（適宜調整）
+        // 連続ヒット防止（攻撃の当たり判定を一瞬だけ無効化）
+        if (recentlyHit) return;               // すでにヒット判定中なら何もしない
+        recentlyHit = true;                    // ヒットフラグON
+        Invoke(nameof(ResetHit), 0.05f);       // 0.05秒後にフラグ解除（調整可能）
 
-        // 掴まれてる最中だけ無敵
+        // 掴まれている最中は無敵（ただし「飛んでいる」場合はダメージ有効）
         if (isGrabbed && !isFlying) return;
 
+        // HPを減らす
         hp -= amount;
         Debug.Log("Enemyに " + amount + " ダメージ！ 現在HP: " + hp);
 
-
+        // HPが0以下になったら死亡処理
         if (hp <= 0)
         {
             Die();
         }
     }
+
+    // ======= 連続ヒット解除用関数 =======
     private void ResetHit()
     {
-        recentlyHit = false;
+        recentlyHit = false; // 再び攻撃を受け付ける
     }
 
-
+    // ======= 死亡処理 =======
     private void Die()
     {
-        Destroy(gameObject);
+        Destroy(gameObject); // このオブジェクト（敵）を消す
     }
 }

@@ -1,50 +1,56 @@
 using UnityEngine;
 
+// プレイヤーの弾発射（ショット・チャージショット）の制御スクリプト
 public class PlayerShoot : MonoBehaviour
 {
-    public GameObject bulletPrefab;    // 弾のプレハブ
-    public Transform firePoint;        // 発射位置
+    public GameObject bulletPrefab;    // 発射する弾のプレハブ（Inspectorで指定）
+    public Transform firePoint;        // 弾の発射位置（空の子オブジェクトなどをセット）
     public float bulletSpeed = 5f;     // 弾の速度
 
-    [HideInInspector] public float chargeTime = 0f; // チャージ中の時間（PlayerControllerが参照）
-    [HideInInspector] public bool isCharging = false; // チャージ中かどうか（PlayerControllerが参照）
-    public float requiredCharge = 2.0f; // 2秒以上で強化弾（PlayerControllerが参照）
+    [HideInInspector] public float chargeTime = 0f;    // チャージ中の時間（他スクリプトが参照用）
+    [HideInInspector] public bool isCharging = false;  // チャージ中かどうか（他スクリプトが参照用）
+    public float requiredCharge = 2.0f;                // チャージ弾に必要な長押し時間（秒）
 
     void Update()
     {
-        // 無敵演出中も含めて色操作はPlayerControllerに任せる（ここではしない）
+        // 無敵中の色変化はPlayerController側で管理。このスクリプトではしない。
 
         // Xボタン押し始めたらチャージ開始
         if (Input.GetKeyDown(KeyCode.X))
         {
             isCharging = true;
-            chargeTime = 0f;
+            chargeTime = 0f; // チャージ時間リセット
         }
 
-        // チャージ中
+        // チャージ中（Xキー長押し中）
         if (isCharging && Input.GetKey(KeyCode.X))
         {
-            chargeTime += Time.deltaTime;
-            // 色はPlayerController.LateUpdateで点滅制御
+            chargeTime += Time.deltaTime; // 経過時間を加算
+            // 色演出はPlayerController.LateUpdateで処理
         }
 
-        // ボタン離した時に発射
+        // Xキーを離した瞬間に弾発射
         if (isCharging && Input.GetKeyUp(KeyCode.X))
         {
-            Shoot(chargeTime >= requiredCharge); // 2秒以上なら強化弾
+            // チャージ時間がrequiredCharge（例:2秒）以上なら強化弾
+            Shoot(chargeTime >= requiredCharge);
             isCharging = false;
             chargeTime = 0f;
-            // 色もここでは触らない
         }
     }
 
+    // 弾を発射する処理
     void Shoot(bool powered)
     {
+        // 弾プレハブを発射位置に生成
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
+
+        // Rigidbody2Dで物理的に飛ばす
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
+        // 弾本体のスクリプト（PlayerBullet）を取得
         PlayerBullet pb = bullet.GetComponent<PlayerBullet>();
 
-        // プレイヤーの向きで左右に撃つ
+        // プレイヤーの向きに合わせて発射方向（右向き=1, 左向き=-1）
         float direction = transform.localScale.x > 0 ? 1f : -1f;
         if (rb != null)
             rb.velocity = new Vector2(direction * bulletSpeed, 0f);
@@ -53,8 +59,8 @@ public class PlayerShoot : MonoBehaviour
         {
             if (powered)
             {
-                pb.damage = 3; // 強化弾
-                bullet.transform.localScale *= 4f;
+                pb.damage = 3; // 強化弾（チャージショット）
+                bullet.transform.localScale *= 4f; // 弾を4倍大きく（見た目のみ）
             }
             else
             {
@@ -62,6 +68,7 @@ public class PlayerShoot : MonoBehaviour
             }
         }
 
+        // 弾は3秒後に自動消滅（画面外処理用）
         Destroy(bullet, 3.0f);
     }
 }

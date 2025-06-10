@@ -2,40 +2,43 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 
+// 文字を1文字ずつ表示するタイプライター風のテキスト表示スクリプト
 public class TypeWriterText : MonoBehaviour
 {
-    public TextMeshProUGUI messageText;
-    public float typeSpeed = 0.03f; // 一文字表示速度
-    private string fullText;
-    private bool isTyping = false;
-    private bool skip = false;
+    public TextMeshProUGUI messageText;  // 表示先のTextMeshProUGUI（UI TextをInspectorで登録）
+    public float typeSpeed = 0.03f;      // 1文字ずつ表示するスピード（秒）
+    private string fullText;             // 表示する全文
+    private bool isTyping = false;       // 今タイプ中かどうか
+    private bool skip = false;           // Zキーで全文表示にスキップするフラグ
 
-    // 文字列セット＋開始
+    // === テキストをセット＆表示開始（外部から呼び出す用） ===
     public void ShowText(string text)
     {
-        StopAllCoroutines();
+        StopAllCoroutines(); // 前回のコルーチンが残っていれば停止
         fullText = text;
-        StartCoroutine(TypeText());
+        StartCoroutine(TypeText()); // 文字送り処理開始
     }
 
+    // === 1文字ずつ表示するコルーチン ===
     IEnumerator TypeText()
     {
         isTyping = true;
-        messageText.text = "";
+        messageText.text = ""; // 最初は空にする
         foreach (char c in fullText)
         {
-            messageText.text += c;
-            if (skip) break;
-            yield return new WaitForSeconds(typeSpeed);
+            messageText.text += c; // 1文字ずつ足していく
+            if (skip) break;       // スキップしたら全文表示へ
+            yield return new WaitForSeconds(typeSpeed); // 指定時間待つ
         }
-        messageText.text = fullText;
+        messageText.text = fullText; // 最後は必ず全文表示
         isTyping = false;
-        skip = false;
+        skip = false; // スキップフラグリセット
     }
 
-    // Zキーでスキップ
+    // === Zキーで全文表示にスキップする処理 ===
     void Update()
     {
+        // タイプ中にZキーを押したら全文表示
         if (isTyping && Input.GetKeyDown(KeyCode.Z))
         {
             skip = true;

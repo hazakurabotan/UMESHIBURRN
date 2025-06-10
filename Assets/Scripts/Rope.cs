@@ -7,68 +7,67 @@
 /// </summary>
 public class Rope : MonoBehaviour
 {
-    public float extendSpeed = 8f;   // ロープが伸びる速さ
-    public float maxLength = 4f;     // ロープの最大長さ
+    public float extendSpeed = 8f;    // ロープが伸びる速さ
+    public float maxLength = 4f;      // ロープの最大長さ
 
-    public float pullSpeed = 5f;     // 引き寄せ速度
-    public float throwForce = 55f;   // 投げる力
+    public float pullSpeed = 5f;      // 引き寄せる速さ
+    public float throwForce = 55f;    // 投げる時の力
 
     private float currentLength = 0.1f; // 今の長さ
-    private bool extending = true;      // 伸びている途中か
+    private bool extending = true;      // 伸びている途中かどうか
 
-    private GameObject target;          // 掴んだ対象
-    private Transform player;           // プレイヤー参照
-    private bool holding = false;       // 掴んでるか
-    private bool grabbed = false;       // 掴めたか
+    private GameObject target;          // 掴んだ対象（敵や箱）
+    private Transform player;           // プレイヤーの参照
+    private bool holding = false;       // 今つかんでいるか
+    private bool grabbed = false;       // 掴めたか（成功フラグ）
 
     void Start()
     {
-        // プレイヤー取得
+        // プレイヤーをタグで探して取得
         player = GameObject.FindGameObjectWithTag("Player").transform;
 
-        // プレイヤーの向きでロープの位置・向きを少し前方にずらす
-        float direction = Mathf.Sign(player.localScale.x); // 1=右, -1=左
+        // プレイヤーの向き（localScale.x）で右向き=1, 左向き=-1
+        float direction = Mathf.Sign(player.localScale.x);
 
-        // プレイヤーの少し前に配置
+        // プレイヤーの少し前にロープを配置
         transform.position = player.position + new Vector3(0.5f * direction, 0, 0);
 
-        // 向き調整
+        // 向き調整（スプライトが左右どちらでも正しく伸びるように）
         Vector3 scale = transform.localScale;
         scale.x = Mathf.Abs(scale.x) * direction;
         transform.localScale = scale;
 
-        // --- 伸び始めの初期化 ---
-        // 最初は短くしておく（中心Pivotの場合は0.1fが無難）
+        // 伸ばし始めの初期化（最初は細い状態で作る）
         scale = transform.localScale;
         scale.x = 0.1f * direction;
         transform.localScale = scale;
         currentLength = 0.1f;
         extending = true;
 
-        // 掴めなかったら1秒で自動消去
+        // 掴めなかった場合は1秒後に自動消去
         Invoke(nameof(CheckIfNotGrabbed), 1f);
     }
 
     void Update()
     {
-        // --- ロープを伸ばす処理 ---
+        // === ロープを伸ばす処理 ===
         if (extending)
         {
-            currentLength += extendSpeed * Time.deltaTime;
+            currentLength += extendSpeed * Time.deltaTime; // 伸ばす
             if (currentLength >= maxLength)
             {
                 currentLength = maxLength;
-                extending = false; // 伸びきった
+                extending = false; // 最大まで伸ばしたらストップ
             }
             Vector3 scale = transform.localScale;
-            scale.x = currentLength * Mathf.Sign(scale.x);
+            scale.x = currentLength * Mathf.Sign(scale.x); // 伸びた長さに調整
             transform.localScale = scale;
         }
 
-        // --- 何かを掴んでいる時の処理 ---
+        // === 何かを掴んでいる時 ===
         if (holding && target != null)
         {
-            // 対象をプレイヤーに引き寄せる
+            // 対象をプレイヤーの方へ移動させる（引き寄せ）
             target.transform.position = Vector2.MoveTowards(
                 target.transform.position,
                 player.position,
@@ -84,18 +83,18 @@ public class Rope : MonoBehaviour
     }
 
     /// <summary>
-    /// 掴んだ対象を投げる
+    /// 掴んだ対象を投げる処理
     /// </summary>
     void Throw()
     {
         Rigidbody2D rb = target.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
-            // プレイヤーの向きに投げる
+            // プレイヤーの向きに投げる（右向き=1, 左向き=-1）
             Vector2 dir = new Vector2(Mathf.Sign(player.localScale.x), 0).normalized;
             rb.velocity = dir * throwForce;
 
-            // 敵だった場合の追加処理
+            // 敵だった場合は「掴まれ解除」「投げられ中」フラグを立てる
             Enemy enemy = target.GetComponent<Enemy>();
             if (enemy != null)
             {
@@ -103,33 +102,36 @@ public class Rope : MonoBehaviour
                 enemy.isFlying = true;
             }
 
-            // 投げられるオブジェクトだった場合の追加処理
+            // 投げオブジェクトの場合は特別な処理
             ThrowableObject to = target.GetComponent<ThrowableObject>();
             if (to != null) to.ActivateAsProjectile();
         }
 
-        // ロープを消す
+        // ロープ本体は消す
         Destroy(gameObject);
     }
 
     /// <summary>
-    /// ロープの先端が何かに当たったとき
+    /// ロープの先端が何かに当たった時の処理
     /// </summary>
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (target != null) return; // 既に掴んでいれば無視
+        // 既に何か掴んでいれば何もしない
+        if (target != null) return;
 
+        // 敵か「投げられる箱」に当たった場合
         if (other.CompareTag("Enemy") || other.CompareTag("Throwable"))
         {
             target = other.gameObject;
             holding = true;
             grabbed = true;
-            extending = false; // 掴んだら伸ばし処理終了
+            extending = false; // もう伸ばさない
 
+            // 当たった物体の動きを止める
             Rigidbody2D rb = target.GetComponent<Rigidbody2D>();
             if (rb != null) rb.velocity = Vector2.zero;
 
-            // 敵なら掴まれ状態にする
+            // 敵なら「掴まれ」フラグON
             Enemy enemy = target.GetComponent<Enemy>();
             if (enemy != null)
             {
@@ -139,7 +141,7 @@ public class Rope : MonoBehaviour
     }
 
     /// <summary>
-    /// 何も掴めなかった時の自動消去
+    /// 何も掴めなかった時は自動消滅（生成1秒後に判定）
     /// </summary>
     void CheckIfNotGrabbed()
     {

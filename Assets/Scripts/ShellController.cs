@@ -2,24 +2,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// 弾やシェルの自動削除を管理するスクリプト
 public class ShellController : MonoBehaviour
 {
-    public float deleteTime = 3.0f; //削除する時間指定
+    public float deleteTime = 3.0f; // 何秒後に自動で消すか
 
-    // Start is called before the first frame update
+    // ====== 最初に1回だけ呼ばれる ======
     void Start()
     {
-        Destroy(gameObject, deleteTime); //削除設定
+        // deleteTime秒後にこのオブジェクトを自動削除
+        Destroy(gameObject, deleteTime);
     }
 
-    // Update is called once per frame
+    // ====== 毎フレーム呼ばれる（今回は使っていません）======
     void Update()
     {
-        
+        // 処理なし
     }
 
+    // ====== 何かとぶつかった時（Trigger同士の判定） ======
     void OnTriggerEnter2D(Collider2D collision)
     {
-        Destroy(gameObject); //何かに接触したら消す
+        // 何かに接触したらすぐ消す
+        Destroy(gameObject);
     }
 }

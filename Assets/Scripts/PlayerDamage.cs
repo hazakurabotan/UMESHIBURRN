@@ -7,10 +7,10 @@ public class PlayerDamage : MonoBehaviour
 {
     private PlayerController player; // PlayerControllerスクリプトの参照
 
-    // オブジェクト生成時に呼ばれる（最初に一回だけ実行される）
+    // ======= オブジェクト生成時に呼ばれる（最初に1回だけ実行される）=======
     void Awake()
     {
-        // 同じオブジェクトに付いているPlayerControllerスクリプトを探す
+        // 同じオブジェクトに付いているPlayerControllerスクリプトを取得
         player = GetComponent<PlayerController>();
 
         // デバッグ用ログ
@@ -24,7 +24,7 @@ public class PlayerDamage : MonoBehaviour
         }
     }
 
-    // 何かとぶつかった時（2Dの当たり判定・IsTrigger用）
+    // ======= 2Dトリガー同士がぶつかったときに呼ばれる =======
     private void OnTriggerEnter2D(Collider2D other)
     {
         // 相手のタグが"Enemy"かどうか判定
@@ -33,12 +33,12 @@ public class PlayerDamage : MonoBehaviour
             // 相手オブジェクトにEnemyスクリプトが付いているかチェック
             Enemy enemy = other.GetComponent<Enemy>();
 
-            // Enemyが見つかり、かつ enemy.isGrabbed が false の場合だけ
+            // Enemyスクリプトがあり、かつ「つかまれていない」敵だけ有効
             if (enemy != null && !enemy.isGrabbed)
             {
                 // プレイヤーコントローラーが見つかっていればダメージ処理を実行
                 if (player != null)
-                    player.TakeDamage(1);
+                    player.TakeDamage(1); // プレイヤーに1ダメージ
             }
         }
     }
