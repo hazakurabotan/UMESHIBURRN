@@ -23,6 +23,7 @@ public class GameManager : MonoBehaviour
     PlayerController playerController;
     EnemyController[] enemyControllers; // 敵スクリプト名は合わせて
     BossSimpleJump[] BossControllers; // 敵スクリプト名は合わせて
+    BossSimpleJump boss; // ←追加
 
     // ==== ステージ遷移 ====
     public static int currentStage = 1;      // 現在のステージ番号（全体で共有）
@@ -66,7 +67,7 @@ public class GameManager : MonoBehaviour
 
         playerController = FindObjectOfType<PlayerController>();
         enemyControllers = FindObjectsOfType<EnemyController>(); // 敵も管理したい場合
-        BossControllers = FindObjectsOfType<BossSimpleJump>(); // Bossも管理したい場合
+        boss = FindObjectOfType<BossSimpleJump>(); // Bossも管理したい場合
 
     }
 
@@ -80,6 +81,8 @@ public class GameManager : MonoBehaviour
             if (itemDisplayPanel != null) itemDisplayPanel.SetActive(true);
             if (playerController != null) playerController.enabled = false;
             foreach (var enemy in enemyControllers) enemy.enabled = false;
+            boss = FindObjectOfType<BossSimpleJump>(); // Bossも管理したい場合
+            if (timeCnt != null) timeCnt.enabled = false;
             isItemPanelOpen = true;
         }
         else if (isItemPanelOpen && Input.GetKeyDown(KeyCode.X))
@@ -88,6 +91,8 @@ public class GameManager : MonoBehaviour
             if (itemDisplayPanel != null) itemDisplayPanel.SetActive(false);
             if (playerController != null) playerController.enabled = true;
             foreach (var enemy in enemyControllers) enemy.enabled = true;
+            if (boss != null) boss.enabled = true;
+            if (timeCnt != null) timeCnt.enabled = true;
             isItemPanelOpen = false;
         }
 
