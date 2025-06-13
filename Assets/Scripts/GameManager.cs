@@ -16,6 +16,14 @@ public class GameManager : MonoBehaviour
     public GameObject restartButton;          // リスタート（やり直し）ボタン
     public GameObject nextButton;             // 次のステージへ進むボタン
 
+
+    //アイテムパネル関連
+    public GameObject itemDisplayPanel;       //ゲーム中にAキーでアイテムパネルの表示/非表示」
+    bool isItemPanelOpen = false;
+    PlayerController playerController;
+    EnemyController[] enemyControllers; // 敵スクリプト名は合わせて
+    BossSimpleJump[] BossControllers; // 敵スクリプト名は合わせて
+
     // ==== ステージ遷移 ====
     public static int currentStage = 1;      // 現在のステージ番号（全体で共有）
 
@@ -51,13 +59,41 @@ public class GameManager : MonoBehaviour
             timeBar.SetActive(false);
         }
 
+        if (itemDisplayPanel != null) itemDisplayPanel.SetActive(false);
+
         // スコアUIを初期表示
         UpdateScore();
+
+        playerController = FindObjectOfType<PlayerController>();
+        enemyControllers = FindObjectsOfType<EnemyController>(); // 敵も管理したい場合
+        BossControllers = FindObjectsOfType<BossSimpleJump>(); // Bossも管理したい場合
+
     }
 
     // ====== 毎フレーム実行される進行管理 ======
     void Update()
     {
+        // --- アイテムパネルの開閉処理だけ分かりやすく抜粋 ---
+        if (!isItemPanelOpen && Input.GetKeyDown(KeyCode.A))
+        {
+            // Aでパネルを開く（ON）
+            if (itemDisplayPanel != null) itemDisplayPanel.SetActive(true);
+            if (playerController != null) playerController.enabled = false;
+            foreach (var enemy in enemyControllers) enemy.enabled = false;
+            isItemPanelOpen = true;
+        }
+        else if (isItemPanelOpen && Input.GetKeyDown(KeyCode.X))
+        {
+            // Xで閉じる（OFF）
+            if (itemDisplayPanel != null) itemDisplayPanel.SetActive(false);
+            if (playerController != null) playerController.enabled = true;
+            foreach (var enemy in enemyControllers) enemy.enabled = true;
+            isItemPanelOpen = false;
+        }
+
+        // パネル開いてる間は他の処理はスキップ
+        if (isItemPanelOpen) return;
+
         // --- ゲームクリア時の処理 ---
         if (PlayerController.gameState == "gameclear")
         {
@@ -130,6 +166,12 @@ public class GameManager : MonoBehaviour
                 Debug.LogWarning("Player が見つかっていません！");
             }
         }
+
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            itemDisplayPanel.SetActive(!itemDisplayPanel.activeSelf);
+        }
+
     }
 
     // ====== メイン画像（結果画面）の一時非表示（ゲーム開始直後の演出用） ======

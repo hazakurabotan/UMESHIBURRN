@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,40 +14,27 @@ public class ItemDisplayManager : MonoBehaviour
 
     void Start()
     {
-        // プレイヤーが取得したアイテム数を取得
+        // ここでは SetActive(false) しない（GameManagerが管理）
         int count = PlayerInventory.obtainedItems.Count;
         displayedItems = new GameObject[count];
 
-        // アイテムごとに画像を並べて生成
         for (int i = 0; i < count; i++)
         {
-            int itemId = PlayerInventory.obtainedItems[i];   // アイテムID（0,1,...）
-
-            // Imageプレハブを親パネルの子として生成
+            int itemId = PlayerInventory.obtainedItems[i];
             GameObject go = Instantiate(itemImagePrefab, parent);
-
-            // デバッグ：位置やサイズを確認したい場合
-            RectTransform rt = go.GetComponent<RectTransform>();
-            Debug.Log($"生成したImage: {go.name}, anchoredPos: {rt.anchoredPosition}, size: {rt.sizeDelta}, scale: {rt.localScale}");
-
-            // 画像をアイテムIDに応じて差し替え
             go.GetComponent<Image>().sprite = itemSprites[itemId];
-
-            // 横に並べる（ここでは100ピクセルずつズラす例）
             go.GetComponent<RectTransform>().anchoredPosition = new Vector2(60 + 100 * i, 0);
-
-            displayedItems[i] = go; // 配列に登録
+            displayedItems[i] = go;
         }
-
-        UpdateHighlight(); // 最初の選択状態を反映
+        UpdateHighlight();
     }
 
     void Update()
     {
-        // 何も表示していない場合は何もしない
+        if (!gameObject.activeSelf) return; // パネル非表示中はスキップ
         if (displayedItems == null || displayedItems.Length == 0) return;
 
-        // 右キーで次のアイテム、左キーで前のアイテム
+        // ←→キーで選択
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             selectIndex = (selectIndex + 1) % displayedItems.Length;
@@ -58,19 +46,39 @@ public class ItemDisplayManager : MonoBehaviour
             UpdateHighlight();
         }
 
-        // Zキーでアイテム使用（例：ID=1が回復アイテム）
+        // Zキーでアイテム使用
         if (Input.GetKeyDown(KeyCode.Z))
         {
             int itemId = PlayerInventory.obtainedItems[selectIndex];
-            if (itemId == 1)
+            if (itemId == 1) // 例：ID1が回復アイテム
             {
-                // プレイヤーを探して回復処理
                 var player = FindObjectOfType<PlayerController>();
                 if (player != null)
                 {
-                    player.Heal(10); // 体力を10回復
+                    player.Heal(10);
                     Debug.Log("体力回復アイテムを使った！");
                 }
+                // 1. アイテムリストから削除
+                PlayerInventory.obtainedItems.RemoveAt(selectIndex);
+
+                // 2. 画面上のImageを消す
+                Destroy(displayedItems[selectIndex]);
+
+                // 3. 配列も詰め直す
+                var newList = new List<GameObject>(displayedItems);
+                newList.RemoveAt(selectIndex);
+                displayedItems = newList.ToArray();
+
+                // 4. 選択インデックスの調整
+                if (selectIndex >= displayedItems.Length)
+                    selectIndex = Mathf.Max(0, displayedItems.Length - 1);
+
+                // 5. 並び直し
+                for (int i = 0; i < displayedItems.Length; i++)
+                {
+                    displayedItems[i].GetComponent<RectTransform>().anchoredPosition = new Vector2(60 + 100 * i, 0);
+                }
+                UpdateHighlight();
             }
             else
             {
@@ -79,7 +87,6 @@ public class ItemDisplayManager : MonoBehaviour
         }
     }
 
-    // 選択中アイテムだけ大きく表示（強調）
     void UpdateHighlight()
     {
         for (int i = 0; i < displayedItems.Length; i++)

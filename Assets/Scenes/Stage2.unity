@@ -2438,6 +2438,10 @@ PrefabInstance:
       propertyPath: afterImagePrefab
       value: 
       objectReference: {fileID: 1931263073724592993, guid: a388e8f674c1e5d479246b11be724384, type: 3}
+    - target: {fileID: 6611244966839157427, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
+      propertyPath: itemDisplayPanel
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 9009474615085610478, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.41
@@ -3073,6 +3077,7 @@ MonoBehaviour:
   panel: {fileID: 1855688000}
   restartButton: {fileID: 74619247}
   nextButton: {fileID: 183397277}
+  itemDisplayPanel: {fileID: 1113883832}
   timeBar: {fileID: 1375201773}
   timeText: {fileID: 1968610183}
   scoreText: {fileID: 1656223690}

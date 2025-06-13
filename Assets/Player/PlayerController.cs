@@ -33,7 +33,6 @@ public class PlayerController : MonoBehaviour
     public GameObject afterImagePrefab;
     public float afterImageInterval = 0.05f;
     private float afterImageTimer = 0f;
-
     public TextMeshProUGUI hpText;
 
     Animator animator;
@@ -150,6 +149,7 @@ public class PlayerController : MonoBehaviour
         {
             invincibleTimer -= Time.deltaTime;
         }
+
     }
 
     // LateUpdate‚Å‘S‚Ä‚ÌF§Œä‚ğˆêŒ³‰»
