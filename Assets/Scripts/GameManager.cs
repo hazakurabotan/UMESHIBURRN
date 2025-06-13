@@ -15,7 +15,10 @@ public class GameManager : MonoBehaviour
     public GameObject panel;                  // ボタンやUIをまとめたパネル
     public GameObject restartButton;          // リスタート（やり直し）ボタン
     public GameObject nextButton;             // 次のステージへ進むボタン
-
+    public GameObject cutInImage;
+    public AudioSource cutInAudioSource; // カットイン用のAudioSource
+    public AudioClip cutInVoiceClip;     // カットイン時に流すボイス
+    public GameObject laserPrefab;
 
     //アイテムパネル関連
     public GameObject itemDisplayPanel;       //ゲーム中にAキーでアイテムパネルの表示/非表示」
@@ -177,7 +180,57 @@ public class GameManager : MonoBehaviour
             itemDisplayPanel.SetActive(!itemDisplayPanel.activeSelf);
         }
 
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            cutInImage.SetActive(true);
+
+            // ボイス再生
+            if (cutInAudioSource != null && cutInVoiceClip != null)
+            {
+                cutInAudioSource.PlayOneShot(cutInVoiceClip);
+            }
+
+            Invoke(nameof(HideCutIn), 1.0f); // 1秒後に消す例
+        }
+
+        
     }
+    void HideCutIn()
+    {
+        cutInImage.SetActive(false);
+
+        // レーザーを発射
+        FireLaser();
+    }
+
+    void FireLaser()
+    {
+        // プレイヤー取得
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return;
+
+        Vector3 pos = player.transform.position ;
+        float dir = player.transform.localScale.x;
+
+        // ワールド座標で900ピクセル分の長さ（PPU=100想定）
+        float length = 1.3f;
+
+        // レーザー生成
+        GameObject laserObj = Instantiate(laserPrefab, pos + new Vector3(5f * dir, 0, 0), Quaternion.identity);
+
+
+        // スケール調整
+        Vector3 scale = laserObj.transform.localScale;
+        scale.x = length;
+        if (dir < 0) scale.x *= -1;
+        laserObj.transform.localScale = scale;
+
+        // 中心pivotなので、前方にだけ出したい場合は「長さの半分」だけ前へ
+        laserObj.transform.position += new Vector3((length / 2f) * dir, 0, 0);
+
+        Destroy(laserObj, 0.6f);
+    }
+
 
     // ====== メイン画像（結果画面）の一時非表示（ゲーム開始直後の演出用） ======
     void InactiveImage()
