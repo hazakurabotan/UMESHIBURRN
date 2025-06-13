@@ -209,8 +209,8 @@ MonoBehaviour:
   goalAnime: PlayerGoal
   deadAnime: PlayerOver
   score: 0
-  ropePrefab: {fileID: 6759413172801053860, guid: 41a6a58def7ccd6448cf478c88d717c3, type: 3}
-  ropeSpawnPoint: {fileID: 0}
+  ropePrefab: {fileID: 3552905523116729988, guid: 1c5567760cb4a7d4980854f6bd4d0f0e, type: 3}
+  ropeSpawnPoint: {fileID: 7454492243263531973, guid: 1c5567760cb4a7d4980854f6bd4d0f0e, type: 3}
   climbSpeed: 3
 --- !u!114 &7507160466738546352
 MonoBehaviour:
@@ -227,6 +227,9 @@ MonoBehaviour:
   bulletPrefab: {fileID: 2431169418744799914, guid: 5b6f4b91009a018438ec82f899cb6866, type: 3}
   firePoint: {fileID: 8555366558716911409}
   bulletSpeed: 5
+  chargeTime: 0
+  isCharging: 0
+  requiredCharge: 2
 --- !u!114 &4956953519680160114
 MonoBehaviour:
   m_ObjectHideFlags: 0

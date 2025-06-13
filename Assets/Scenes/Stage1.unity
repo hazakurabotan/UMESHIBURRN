@@ -137,7 +137,15 @@ PrefabInstance:
     - target: {fileID: 6611244966839157427, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
       propertyPath: hpBar
       value: 
-      objectReference: {fileID: 907759362}
+      objectReference: {fileID: 0}
+    - target: {fileID: 6611244966839157427, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
+      propertyPath: ropePrefab
+      value: 
+      objectReference: {fileID: 3552905523116729988, guid: 1c5567760cb4a7d4980854f6bd4d0f0e, type: 3}
+    - target: {fileID: 6611244966839157427, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
+      propertyPath: ropeSpawnPoint
+      value: 
+      objectReference: {fileID: 7454492243263531973, guid: 1c5567760cb4a7d4980854f6bd4d0f0e, type: 3}
     - target: {fileID: 9009474615085610478, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
       propertyPath: m_LocalPosition.x
       value: -8.717033
@@ -1515,17 +1523,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 297811011535368657, guid: 4c5691e0189b6ff49b1abe00c1e24d23, type: 3}
   m_PrefabInstance: {fileID: 900618316}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &907759362 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4541269224866190077, guid: 4c5691e0189b6ff49b1abe00c1e24d23, type: 3}
-  m_PrefabInstance: {fileID: 900618316}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73e7f66c96754da4b8a0106081ad6663, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &930282561
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2156,6 +2153,7 @@ MonoBehaviour:
   panel: {fileID: 1855688000}
   restartButton: {fileID: 74619247}
   nextButton: {fileID: 183397277}
+  itemDisplayPanel: {fileID: 0}
   timeBar: {fileID: 1375201773}
   timeText: {fileID: 1968610183}
   scoreText: {fileID: 1656223690}

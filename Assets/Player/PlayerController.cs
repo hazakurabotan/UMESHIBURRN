@@ -54,6 +54,9 @@ public class PlayerController : MonoBehaviour
     public float climbSpeed = 3f;
 
     public static string gameState = "playing";
+    bool isHanging = false;
+    Vector2 hangPoint = Vector2.zero;
+
 
     Vector2 knockbackVelocity = Vector2.zero;
     float knockbackTimer = 0f;
@@ -125,6 +128,19 @@ public class PlayerController : MonoBehaviour
             afterImageTimer = 0f;
         }
 
+        if (isHanging)
+        {
+            // プレイヤーの位置をロープのぶら下がり位置に維持
+            transform.position = hangPoint + new Vector2(0, -0.5f); // 少し下にずらす
+                                                                    // ジャンプや特定キーで解除可能
+            if (Input.GetKeyDown(KeyCode.Z)) // 例：ジャンプ解除
+            {
+                isHanging = false;
+                // 普通の操作に戻る
+            }
+            return; // それ以外のUpdate処理はスキップ
+        }
+
         // 向き反転
         if (axisH > 0) transform.localScale = new Vector2(1, 1);
         else if (axisH < 0) transform.localScale = new Vector2(-1, 1);
@@ -135,8 +151,28 @@ public class PlayerController : MonoBehaviour
         // ロープ発射
         if (Input.GetKeyDown(KeyCode.C) && canShootRope)
         {
+            Vector2 ropeDir;
+            // 上方向のみ
+            if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))
+                ropeDir = Vector2.up;
+            // 下方向は撃てない！
+            // else if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))
+            //     ropeDir = Vector2.down; // ←この行をコメントアウト/削除
+            // 横方向
+            else if (transform.localScale.x > 0)
+                ropeDir = Vector2.right;
+            else
+                ropeDir = Vector2.left;
+
+            GameObject ropeObj = Instantiate(ropePrefab, ropeSpawnPoint.position, Quaternion.identity);
+
+            Rope ropeScript = ropeObj.GetComponent<Rope>();
+            if (ropeScript != null)
+                ropeScript.SetDirection(ropeDir);
+
             StartCoroutine(ShootRopeWithCooldown());
         }
+
 
         // ハシゴでシーン移動
         if (onLadder && transform.position.y >= 5.5f)
@@ -187,8 +223,22 @@ public class PlayerController : MonoBehaviour
     IEnumerator ShootRopeWithCooldown()
     {
         canShootRope = false;
+
+        // 方向決定（上キー優先、それ以外は向いてる向き）
+        Vector2 ropeDir;
+        if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))
+            ropeDir = Vector2.up;
+        else
+            ropeDir = (transform.localScale.x > 0) ? Vector2.right : Vector2.left;
+
         Vector3 spawnPos = ropeSpawnPoint != null ? ropeSpawnPoint.position : transform.position;
-        Instantiate(ropePrefab, spawnPos, Quaternion.identity);
+        GameObject ropeObj = Instantiate(ropePrefab, spawnPos, Quaternion.identity);
+
+        // Ropeスクリプトに方向を渡す
+        Rope ropeScript = ropeObj.GetComponent<Rope>();
+        if (ropeScript != null)
+            ropeScript.SetDirection(ropeDir);
+
         yield return new WaitForSeconds(ropeCooldown);
         canShootRope = true;
     }
@@ -327,6 +377,16 @@ public class PlayerController : MonoBehaviour
         currentHP = Mathf.Clamp(currentHP, 0, maxHP);
         UpdateHpUI();
         Debug.Log("回復！ 現在のHP: " + currentHP);
+    }
+
+
+    public void StartHangFromRope(Vector2 ropePoint)
+    {
+        // 例：プレイヤーの動きを止めて、その場所にぶら下げる
+        rbody.velocity = Vector2.zero;
+        // ぶら下がりフラグをON（Updateで特殊挙動をする用）
+        isHanging = true;
+        hangPoint = ropePoint;
     }
 
 
