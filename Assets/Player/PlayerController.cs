@@ -13,6 +13,12 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundLayer;
     bool goJump = false;
 
+    // ====== ぶら下がり振り子用 ======
+    Vector2 hangPoint = Vector2.zero;      // 支点
+    float swingAngle = 0;   // 現在の角度（ラジアン）
+    float swingSpeed = 0;   // 揺れの速度
+    float ropeLength = 2f;  // ロープの長さ
+
     SpriteRenderer sr;
     float invincibleTimer = 0f;
     public float invincibleTime = 3f;
@@ -55,12 +61,16 @@ public class PlayerController : MonoBehaviour
 
     public static string gameState = "playing";
     bool isHanging = false;
-    Vector2 hangPoint = Vector2.zero;
+   
 
 
     Vector2 knockbackVelocity = Vector2.zero;
     float knockbackTimer = 0f;
     float knockbackDuration = 0.2f;
+
+    float maxSwingAngle = Mathf.PI / 2; // 90度（ラジアン）
+
+
 
     void Start()
     {
@@ -130,15 +140,53 @@ public class PlayerController : MonoBehaviour
 
         if (isHanging)
         {
-            // プレイヤーの位置をロープのぶら下がり位置に維持
-            transform.position = hangPoint + new Vector2(0, -0.5f); // 少し下にずらす
-                                                                    // ジャンプや特定キーで解除可能
-            if (Input.GetKeyDown(KeyCode.Z)) // 例：ジャンプ解除
+            // --- 振り子の運動公式 ---
+            // 例: 左右キー入力でswingSpeedに加速
+            if (Input.GetKey(KeyCode.LeftArrow))
+                swingSpeed -= 5.0f * Time.deltaTime;
+            if (Input.GetKey(KeyCode.RightArrow))
+                swingSpeed += 5.0f * Time.deltaTime;
+
+            // 重力効果による加速
+            float gravity = 12.8f;
+            swingSpeed -= gravity / ropeLength * Mathf.Sin(swingAngle) * Time.deltaTime;
+
+            // 角速度減衰
+            swingSpeed *= 0.999f;
+
+            // 角度更新
+            swingAngle += swingSpeed * Time.deltaTime;
+
+            // === 振り子の振幅を±90度に制限 ===
+            if (swingAngle > maxSwingAngle)
+            {
+                swingAngle = maxSwingAngle;
+                if (swingSpeed > 0) swingSpeed *= -0.95f; // 跳ね返り減衰（必要なら）
+            }
+            else if (swingAngle < -maxSwingAngle)
+            {
+                swingAngle = -maxSwingAngle;
+                if (swingSpeed < 0) swingSpeed *= -0.95f; // 跳ね返り減衰（必要なら）
+            }
+
+            // プレイヤー座標を支点からの極座標で決定
+            Vector2 offset = new Vector2(
+                Mathf.Sin(swingAngle),
+                -Mathf.Cos(swingAngle)
+            ) * ropeLength;
+            transform.position = hangPoint + offset;
+
+            // ジャンプで解除（勢い付与も可）
+            if (Input.GetKeyDown(KeyCode.Z))
             {
                 isHanging = false;
-                // 普通の操作に戻る
+                // 勢いジャンプ（放物運動に初速を加える）
+                rbody.velocity = new Vector2(
+                    swingSpeed * ropeLength * Mathf.Cos(swingAngle + Mathf.PI / 2),
+                    swingSpeed * ropeLength * Mathf.Sin(swingAngle + Mathf.PI / 2) + jump
+                );
             }
-            return; // それ以外のUpdate処理はスキップ
+            return;
         }
 
         // 向き反転
@@ -187,6 +235,19 @@ public class PlayerController : MonoBehaviour
         }
 
     }
+
+    public void StartHangFromRope(Vector2 ropePoint)
+    {
+        isHanging = true;
+        hangPoint = ropePoint;
+
+        // 支点から今の自分へのベクトルで初期角度
+        Vector2 delta = transform.position - (Vector3)ropePoint;
+        swingAngle = Mathf.Atan2(delta.y, delta.x);
+        swingSpeed = 0;
+    }
+
+
 
     // LateUpdateで全ての色制御を一元化
     void LateUpdate()
@@ -377,16 +438,6 @@ public class PlayerController : MonoBehaviour
         currentHP = Mathf.Clamp(currentHP, 0, maxHP);
         UpdateHpUI();
         Debug.Log("回復！ 現在のHP: " + currentHP);
-    }
-
-
-    public void StartHangFromRope(Vector2 ropePoint)
-    {
-        // 例：プレイヤーの動きを止めて、その場所にぶら下げる
-        rbody.velocity = Vector2.zero;
-        // ぶら下がりフラグをON（Updateで特殊挙動をする用）
-        isHanging = true;
-        hangPoint = ropePoint;
     }
 
 
