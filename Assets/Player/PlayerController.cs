@@ -13,6 +13,9 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundLayer;
     bool goJump = false;
 
+    public float wallJumpPowerX = 7.0f; // 横方向の力
+    public float wallJumpPowerY = 12.0f; // 上方向の力
+
     float wallJumpLockTimer = 0f;
     public float wallJumpLockTime = 0.2f;
 
@@ -95,6 +98,12 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (wallJumpLockTimer > 0f)
+        {
+            wallJumpLockTimer -= Time.deltaTime;
+        }
+
+
         if (gameState != "playing") return;
 
         axisH = Input.GetAxisRaw("Horizontal");
@@ -152,10 +161,10 @@ public class PlayerController : MonoBehaviour
         isTouchingWall = Physics2D.OverlapCircle(wallCheck.position, wallCheckRadius, wallLayer);
 
         // 壁スライド処理
-        if (isTouchingWall && !onGround && axisH != 0)
+        if (isTouchingWall && !onGround && axisH != 0 && wallJumpLockTimer <= 0f)
         {
             isWallSliding = true;
-            rbody.velocity = new Vector2(rbody.velocity.x, -wallSlideSpeed);
+            rbody.velocity = new Vector2(rbody.velocity.x, -wallSlideSpeed); // ←ロック中はこれを止める
         }
         else
         {
@@ -167,15 +176,15 @@ public class PlayerController : MonoBehaviour
         {
             if (onGround)
             {
-                Jump();  // 通常ジャンプ
+                Jump();
             }
             else if (isWallSliding)
             {
                 float wallJumpDirection = transform.localScale.x > 0 ? -1 : 1;
                 rbody.velocity = new Vector2(wallJumpDirection * speed * 1.2f, jump);
                 transform.localScale = new Vector2(wallJumpDirection, 1);
-                wallJumpLockTimer = wallJumpLockTime;
-                isWallSliding = false; // 念のため解除
+                wallJumpLockTimer = wallJumpLockTime; // ★タイマーON
+                isWallSliding = false;
             }
         }
 
