@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
@@ -13,11 +13,22 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundLayer;
     bool goJump = false;
 
-    // ====== ‚Ô‚ç‰º‚ª‚èU‚èq—p ======
-    Vector2 hangPoint = Vector2.zero;      // x“_
-    float swingAngle = 0;   // Œ»İ‚ÌŠp“xiƒ‰ƒWƒAƒ“j
-    float swingSpeed = 0;   // —h‚ê‚Ì‘¬“x
-    float ropeLength = 2f;  // ƒ[ƒv‚Ì’·‚³
+    float wallJumpLockTimer = 0f;
+    public float wallJumpLockTime = 0.2f;
+
+    // ====== ã¶ã‚‰ä¸‹ãŒã‚ŠæŒ¯ã‚Šå­ç”¨ ======
+    Vector2 hangPoint = Vector2.zero;      // æ”¯ç‚¹
+    float swingAngle = 0;   // ç¾åœ¨ã®è§’åº¦ï¼ˆãƒ©ã‚¸ã‚¢ãƒ³ï¼‰
+    float swingSpeed = 0;   // æºã‚Œã®é€Ÿåº¦
+    float ropeLength = 2f;  // ãƒ­ãƒ¼ãƒ—ã®é•·ã•
+
+    public Transform wallCheck;
+    public LayerMask wallLayer;
+    public float wallCheckRadius = 0.2f;
+
+    bool isTouchingWall = false;
+    bool isWallSliding = false;
+    public float wallSlideSpeed = 2f;
 
     SpriteRenderer sr;
     float invincibleTimer = 0f;
@@ -61,23 +72,18 @@ public class PlayerController : MonoBehaviour
 
     public static string gameState = "playing";
     bool isHanging = false;
-   
-
 
     Vector2 knockbackVelocity = Vector2.zero;
     float knockbackTimer = 0f;
     float knockbackDuration = 0.2f;
 
-    float maxSwingAngle = Mathf.PI / 2; // 90“xiƒ‰ƒWƒAƒ“j
-
-
+    float maxSwingAngle = Mathf.PI / 2; // 90åº¦ï¼ˆãƒ©ã‚¸ã‚¢ãƒ³ï¼‰
 
     void Start()
     {
         rbody = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         sr = GetComponent<SpriteRenderer>();
-        Debug.Log("SpriteRenderer: " + sr);
 
         nowAnime = stopAnime;
         oldAnime = stopAnime;
@@ -94,7 +100,7 @@ public class PlayerController : MonoBehaviour
         axisH = Input.GetAxisRaw("Horizontal");
         axisV = Input.GetAxisRaw("Vertical");
 
-        // ƒ_ƒbƒVƒ…
+        // ãƒ€ãƒƒã‚·ãƒ¥
         if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
         {
             if (Time.time - lastLeftTapTime < dashDoubleTapTime)
@@ -114,7 +120,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.LeftArrow) || Input.GetKeyUp(KeyCode.RightArrow) || Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.D))
             isDashing = false;
 
-        // c‘œƒGƒtƒFƒNƒg
+        // æ®‹åƒã‚¨ãƒ•ã‚§ã‚¯ãƒˆ
         void CreateAfterImage()
         {
             var obj = Instantiate(afterImagePrefab, transform.position, transform.rotation);
@@ -138,49 +144,76 @@ public class PlayerController : MonoBehaviour
             afterImageTimer = 0f;
         }
 
+        CapsuleCollider2D col = GetComponent<CapsuleCollider2D>();
+        Vector2 origin = new Vector2(transform.position.x, col.bounds.min.y - 0.05f);
+        bool onGround = Physics2D.OverlapCircle(origin, 0.1f, groundLayer);
+
+        // å£ãƒã‚§ãƒƒã‚¯å‡¦ç†
+        isTouchingWall = Physics2D.OverlapCircle(wallCheck.position, wallCheckRadius, wallLayer);
+
+        // å£ã‚¹ãƒ©ã‚¤ãƒ‰å‡¦ç†
+        if (isTouchingWall && !onGround && axisH != 0)
+        {
+            isWallSliding = true;
+            rbody.velocity = new Vector2(rbody.velocity.x, -wallSlideSpeed);
+        }
+        else
+        {
+            isWallSliding = false;
+        }
+
+        // å£ã‚¸ãƒ£ãƒ³ãƒ—ã®å…¥åŠ›
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            if (onGround)
+            {
+                Jump();  // é€šå¸¸ã‚¸ãƒ£ãƒ³ãƒ—
+            }
+            else if (isWallSliding)
+            {
+                float wallJumpDirection = transform.localScale.x > 0 ? -1 : 1;
+                rbody.velocity = new Vector2(wallJumpDirection * speed * 1.2f, jump);
+                transform.localScale = new Vector2(wallJumpDirection, 1);
+                wallJumpLockTimer = wallJumpLockTime;
+                isWallSliding = false; // å¿µã®ãŸã‚è§£é™¤
+            }
+        }
+
+        // ãƒ­ãƒ¼ãƒ—ã‚¢ã‚¯ã‚·ãƒ§ãƒ³ï¼ˆã¶ã‚‰ä¸‹ãŒã‚Šä¸­ï¼‰
         if (isHanging)
         {
-            // --- U‚èq‚Ì‰^“®Œö® ---
-            // —á: ¶‰EƒL[“ü—Í‚ÅswingSpeed‚É‰Á‘¬
             if (Input.GetKey(KeyCode.LeftArrow))
                 swingSpeed -= 5.0f * Time.deltaTime;
             if (Input.GetKey(KeyCode.RightArrow))
                 swingSpeed += 5.0f * Time.deltaTime;
 
-            // d—ÍŒø‰Ê‚É‚æ‚é‰Á‘¬
             float gravity = 12.8f;
             swingSpeed -= gravity / ropeLength * Mathf.Sin(swingAngle) * Time.deltaTime;
-
-            // Šp‘¬“xŒ¸Š
             swingSpeed *= 0.999f;
-
-            // Šp“xXV
             swingAngle += swingSpeed * Time.deltaTime;
 
-            // === U‚èq‚ÌU•‚ğ}90“x‚É§ŒÀ ===
+            // Â±90åº¦åˆ¶é™
             if (swingAngle > maxSwingAngle)
             {
                 swingAngle = maxSwingAngle;
-                if (swingSpeed > 0) swingSpeed *= -0.95f; // ’µ‚Ë•Ô‚èŒ¸Ši•K—v‚È‚çj
+                if (swingSpeed > 0) swingSpeed *= -0.95f;
             }
             else if (swingAngle < -maxSwingAngle)
             {
                 swingAngle = -maxSwingAngle;
-                if (swingSpeed < 0) swingSpeed *= -0.95f; // ’µ‚Ë•Ô‚èŒ¸Ši•K—v‚È‚çj
+                if (swingSpeed < 0) swingSpeed *= -0.95f;
             }
 
-            // ƒvƒŒƒCƒ„[À•W‚ğx“_‚©‚ç‚Ì‹ÉÀ•W‚ÅŒˆ’è
             Vector2 offset = new Vector2(
                 Mathf.Sin(swingAngle),
                 -Mathf.Cos(swingAngle)
             ) * ropeLength;
             transform.position = hangPoint + offset;
 
-            // ƒWƒƒƒ“ƒv‚Å‰ğœi¨‚¢•t—^‚à‰Âj
+            // æŒ¯ã‚Šå­ä¸­ã‚¸ãƒ£ãƒ³ãƒ—ã§è§£é™¤
             if (Input.GetKeyDown(KeyCode.Z))
             {
                 isHanging = false;
-                // ¨‚¢ƒWƒƒƒ“ƒvi•ú•¨‰^“®‚É‰‘¬‚ğ‰Á‚¦‚éj
                 rbody.velocity = new Vector2(
                     swingSpeed * ropeLength * Mathf.Cos(swingAngle + Mathf.PI / 2),
                     swingSpeed * ropeLength * Mathf.Sin(swingAngle + Mathf.PI / 2) + jump
@@ -189,31 +222,22 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Œü‚«”½“]
+        // å‘ãåè»¢
         if (axisH > 0) transform.localScale = new Vector2(1, 1);
         else if (axisH < 0) transform.localScale = new Vector2(-1, 1);
 
-        // ƒWƒƒƒ“ƒv
-        if (Input.GetKeyDown(KeyCode.Z)) Jump();
-
-        // ƒ[ƒv”­Ë
+        // ãƒ­ãƒ¼ãƒ—ç™ºå°„
         if (Input.GetKeyDown(KeyCode.C) && canShootRope)
         {
             Vector2 ropeDir;
-            // ã•ûŒü‚Ì‚İ
             if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))
                 ropeDir = Vector2.up;
-            // ‰º•ûŒü‚ÍŒ‚‚Ä‚È‚¢I
-            // else if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))
-            //     ropeDir = Vector2.down; // ©‚±‚Ìs‚ğƒRƒƒ“ƒgƒAƒEƒg/íœ
-            // ‰¡•ûŒü
             else if (transform.localScale.x > 0)
                 ropeDir = Vector2.right;
             else
                 ropeDir = Vector2.left;
 
             GameObject ropeObj = Instantiate(ropePrefab, ropeSpawnPoint.position, Quaternion.identity);
-
             Rope ropeScript = ropeObj.GetComponent<Rope>();
             if (ropeScript != null)
                 ropeScript.SetDirection(ropeDir);
@@ -221,19 +245,17 @@ public class PlayerController : MonoBehaviour
             StartCoroutine(ShootRopeWithCooldown());
         }
 
-
-        // ƒnƒVƒS‚ÅƒV[ƒ“ˆÚ“®
+        // ãƒã‚·ã‚´ã§ã‚·ãƒ¼ãƒ³ç§»å‹•
         if (onLadder && transform.position.y >= 5.5f)
         {
             SceneManager.LoadScene("Stage2");
         }
 
-        // –³“Gƒ^ƒCƒ}[is‚¾‚¯‚±‚±‚ÅŠÇ—
+        // ç„¡æ•µã‚¿ã‚¤ãƒãƒ¼é€²è¡Œ
         if (invincibleTimer > 0f)
         {
             invincibleTimer -= Time.deltaTime;
         }
-
     }
 
     public void StartHangFromRope(Vector2 ropePoint)
@@ -241,28 +263,24 @@ public class PlayerController : MonoBehaviour
         isHanging = true;
         hangPoint = ropePoint;
 
-        // x“_‚©‚ç¡‚Ì©•ª‚Ö‚ÌƒxƒNƒgƒ‹‚Å‰ŠúŠp“x
+        // æ”¯ç‚¹ã‹ã‚‰ä»Šã®è‡ªåˆ†ã¸ã®ãƒ™ã‚¯ãƒˆãƒ«ã§åˆæœŸè§’åº¦
         Vector2 delta = transform.position - (Vector3)ropePoint;
         swingAngle = Mathf.Atan2(delta.y, delta.x);
         swingSpeed = 0;
     }
 
-
-
-    // LateUpdate‚Å‘S‚Ä‚ÌF§Œä‚ğˆêŒ³‰»
+    // LateUpdateã§å…¨ã¦ã®è‰²åˆ¶å¾¡ã‚’ä¸€å…ƒåŒ–
     void LateUpdate()
     {
         PlayerShoot shoot = GetComponent<PlayerShoot>();
 
         if (invincibleTimer > 0f)
         {
-            // –³“G’†“_–Åi—Dæ“xÅãˆÊj
             float blink = Mathf.Repeat(invincibleTimer * 10f, 1f);
             sr.color = (blink < 0.5f) ? Color.yellow : new Color(1, 1, 0, 0);
         }
         else if (shoot != null && shoot.isCharging)
         {
-            // ƒ`ƒƒ[ƒW’†“_–Åi–³“G‚Å‚È‚¯‚ê‚Îj
             float blink = Mathf.PingPong(Time.time * 3f, 1f);
             if (shoot.chargeTime >= shoot.requiredCharge)
                 sr.color = (blink < 0.5f) ? Color.red : new Color(1f, 1f, 1f, 0.4f);
@@ -271,7 +289,6 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            // ’Êí
             sr.color = Color.white;
         }
     }
@@ -285,7 +302,6 @@ public class PlayerController : MonoBehaviour
     {
         canShootRope = false;
 
-        // •ûŒüŒˆ’èiãƒL[—DæA‚»‚êˆÈŠO‚ÍŒü‚¢‚Ä‚éŒü‚«j
         Vector2 ropeDir;
         if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))
             ropeDir = Vector2.up;
@@ -294,8 +310,6 @@ public class PlayerController : MonoBehaviour
 
         Vector3 spawnPos = ropeSpawnPoint != null ? ropeSpawnPoint.position : transform.position;
         GameObject ropeObj = Instantiate(ropePrefab, spawnPos, Quaternion.identity);
-
-        // RopeƒXƒNƒŠƒvƒg‚É•ûŒü‚ğ“n‚·
         Rope ropeScript = ropeObj.GetComponent<Rope>();
         if (ropeScript != null)
             ropeScript.SetDirection(ropeDir);
@@ -315,7 +329,32 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        float currentSpeed = isDashing ? dashSpeed : speed;
+        float inputX = axisH;
+
+        // å£ã‚¸ãƒ£ãƒ³ãƒ—ãƒ­ãƒƒã‚¯
+        if (wallJumpLockTimer > 0)
+        {
+            wallJumpLockTimer -= Time.fixedDeltaTime;
+            inputX = 0;
+        }
+        else
+        {
+            wallJumpLockTimer = 0;
+        }
+
+        // â†“å£ã‚¹ãƒ©ã‚¤ãƒ‰è½ä¸‹é€Ÿåº¦åˆ¶é™ã‚’ã“ã“ã§å®Ÿæ–½â†“
+        if (isWallSliding)
+        {
+            // ç¾åœ¨ã®Xé€Ÿåº¦ã¯ç¶­æŒã€Yé€Ÿåº¦ã®ã¿åˆ¶é™
+            rbody.velocity = new Vector2(
+                rbody.velocity.x,
+                Mathf.Max(rbody.velocity.y, -wallSlideSpeed)
+            );
+        }
+        else
+        {
+            rbody.velocity = new Vector2(inputX * (isDashing ? dashSpeed : speed), rbody.velocity.y);
+        }
 
         if (onLadder)
         {
@@ -328,8 +367,6 @@ public class PlayerController : MonoBehaviour
             CapsuleCollider2D col = GetComponent<CapsuleCollider2D>();
             Vector2 origin = new Vector2(transform.position.x, col.bounds.min.y - 0.05f);
             bool onGround = Physics2D.OverlapCircle(origin, 0.1f, groundLayer);
-
-            rbody.velocity = new Vector2(axisH * currentSpeed, rbody.velocity.y);
 
             if (onGround && goJump)
             {
@@ -423,7 +460,6 @@ public class PlayerController : MonoBehaviour
     {
         if (gameState != "playing") return;
         if (invincibleTimer > 0f) return;
-        Debug.Log("ƒ_ƒ[ƒWó‚¯‚½I");
         currentHP -= damage;
         currentHP = Mathf.Clamp(currentHP, 0, maxHP);
         UpdateHpUI();
@@ -437,9 +473,7 @@ public class PlayerController : MonoBehaviour
         currentHP += amount;
         currentHP = Mathf.Clamp(currentHP, 0, maxHP);
         UpdateHpUI();
-        Debug.Log("‰ñ•œI Œ»İ‚ÌHP: " + currentHP);
     }
-
 
     void UpdateHpUI()
     {
