@@ -25,11 +25,11 @@ public class PlayerController : MonoBehaviour
     float swingSpeed = 0;   // 揺れの速度
     float ropeLength = 2f;  // ロープの長さ
 
-    public Transform wallCheck;
+    public Transform wallCheckLeft, wallCheckRight;
     public LayerMask wallLayer;
     public float wallCheckRadius = 0.2f;
 
-    bool isTouchingWall = false;
+    bool isTouchingWallLeft = false, isTouchingWallRight = false;
     bool isWallSliding = false;
     public float wallSlideSpeed = 2f;
 
@@ -157,21 +157,20 @@ public class PlayerController : MonoBehaviour
         Vector2 origin = new Vector2(transform.position.x, col.bounds.min.y - 0.05f);
         bool onGround = Physics2D.OverlapCircle(origin, 0.1f, groundLayer);
 
-        // 壁チェック処理
-        isTouchingWall = Physics2D.OverlapCircle(wallCheck.position, wallCheckRadius, wallLayer);
+        // --- 壁チェック ---
+        isTouchingWallLeft = Physics2D.OverlapCircle(wallCheckLeft.position, wallCheckRadius, wallLayer);
+        isTouchingWallRight = Physics2D.OverlapCircle(wallCheckRight.position, wallCheckRadius, wallLayer);
 
-        // 壁スライド処理
-        if (isTouchingWall && !onGround && axisH != 0 && wallJumpLockTimer <= 0f)
+        // --- 壁スライド判定 ---
+        isWallSliding = false;
+        if ((isTouchingWallLeft || isTouchingWallRight) && !onGround && axisH != 0 && wallJumpLockTimer <= 0f)
         {
             isWallSliding = true;
-            rbody.velocity = new Vector2(rbody.velocity.x, -wallSlideSpeed); // ←ロック中はこれを止める
-        }
-        else
-        {
-            isWallSliding = false;
+            rbody.velocity = new Vector2(rbody.velocity.x, -wallSlideSpeed);
         }
 
-        // 壁ジャンプの入力
+
+        // --- 壁ジャンプ ---
         if (Input.GetKeyDown(KeyCode.Z))
         {
             if (onGround)
@@ -180,13 +179,36 @@ public class PlayerController : MonoBehaviour
             }
             else if (isWallSliding)
             {
-                float wallJumpDirection = transform.localScale.x > 0 ? -1 : 1;
-                rbody.velocity = new Vector2(wallJumpDirection * speed * 1.2f, jump);
-                transform.localScale = new Vector2(wallJumpDirection, 1);
-                wallJumpLockTimer = wallJumpLockTime; // ★タイマーON
+                float wallJumpDirection = 0;
+                if (isTouchingWallRight && !isTouchingWallLeft)
+                {
+                    wallJumpDirection = -1;
+                }
+                else if (isTouchingWallLeft && !isTouchingWallRight)
+                {
+                    wallJumpDirection = 1;
+                }
+                else
+                {
+                    wallJumpDirection = (axisH >= 0) ? 1 : -1;
+                }
+
+                // 1. X方向をより強く、Yも調整
+                Vector2 jumpVelocity = new Vector2(wallJumpDirection * wallJumpPowerX, wallJumpPowerY);
+                rbody.velocity = jumpVelocity;
+
+                // 2. 壁ジャンプロック
+                wallJumpLockTimer = wallJumpLockTime;
                 isWallSliding = false;
+
+                // 3. キャラの向き
+                transform.localScale = new Vector2(wallJumpDirection, 1);
+
+                // 4. 位置を壁から0.2fほど離す
+                transform.position += new Vector3(wallJumpDirection * 0.2f, 0, 0);
             }
         }
+
 
         // ロープアクション（ぶら下がり中）
         if (isHanging)
