@@ -6,6 +6,11 @@ public class PlayerBullet : MonoBehaviour
     public int damage = 1;  // 弾のダメージ量（強化弾なら3などに変更もOK）
     private bool hasHit = false; // すでに何かに当たったかどうか（多重ヒット防止）
 
+    public void SetDamage(int value)
+    {
+        damage = value;
+    }
+
     // ====== 他のCollider2Dと当たったときに自動で呼ばれる ======
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -19,6 +24,7 @@ public class PlayerBullet : MonoBehaviour
         {
             hasHit = true;  // これ以上当たらないようにフラグを立てる
             Debug.Log("弾が敵に当たった！" + Time.time);
+            Debug.Log($"攻撃力{damage}で発射！");
 
             Enemy enemy = other.GetComponent<Enemy>(); // Enemyスクリプト取得
             if (enemy != null)
@@ -33,6 +39,7 @@ public class PlayerBullet : MonoBehaviour
         {
             hasHit = true;
             Debug.Log("弾がボスに当たった！" + Time.time);
+            Debug.Log($"攻撃力{damage}で発射！");
 
             // ボス本体のスクリプト（BossSimpleJump）を取得
             BossSimpleJump boss = other.GetComponent<BossSimpleJump>();

@@ -65,6 +65,7 @@ public class PlayerController : MonoBehaviour
     string oldAnime = "";
 
     public int score = 0;
+    public int bulletDamage = 1;
     public GameObject ropePrefab;
     public Transform ropeSpawnPoint;
     float ropeCooldown = 1f;

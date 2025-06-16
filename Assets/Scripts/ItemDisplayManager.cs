@@ -2,19 +2,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-// プレイヤーが持っているアイテム一覧をUIで表示・選択するクラス
+// アイテムリストの表示と管理を担当（装備処理は外部にまかせる）
 public class ItemDisplayManager : MonoBehaviour
 {
-    public Sprite[] itemSprites;        // アイテム画像リスト（例: 0=リンゴ, 1=ポーション…）
-    public RectTransform parent;        // 並べる親オブジェクト（UIのPanelなどを指定）
-    public GameObject itemImagePrefab;  // アイテム画像用のプレハブ（ImageがついてるPrefab）
+    public Sprite[] itemSprites;         // アイテム画像（ID順に対応）
+    public RectTransform parent;         // アイテム画像を並べるパネル
+    public GameObject itemImagePrefab;   // Image付きプレハブ
 
-    int selectIndex = 0;                // 現在選択中のインデックス
-    GameObject[] displayedItems;        // 画面上に生成されたアイテムオブジェクト配列
+    int selectIndex = 0;                 // 今選択しているインデックス
+    GameObject[] displayedItems;         // 画面に並んだアイテムUIの配列
 
     void Start()
     {
-        // ここでは SetActive(false) しない（GameManagerが管理）
         int count = PlayerInventory.obtainedItems.Count;
         displayedItems = new GameObject[count];
 
@@ -31,10 +30,15 @@ public class ItemDisplayManager : MonoBehaviour
 
     void Update()
     {
-        if (!gameObject.activeSelf) return; // パネル非表示中はスキップ
+        if (!gameObject.activeSelf) return;
         if (displayedItems == null || displayedItems.Length == 0) return;
 
-        // ←→キーで選択
+        // 装備確認中は操作禁止
+        EquipUIManager ui = FindObjectOfType<EquipUIManager>();
+        if (ui != null && ui.IsConfirming()) return;
+
+
+        // ←→で選択
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             selectIndex = (selectIndex + 1) % displayedItems.Length;
@@ -46,44 +50,60 @@ public class ItemDisplayManager : MonoBehaviour
             UpdateHighlight();
         }
 
-        // Zキーでアイテム使用
+        // Zキーでアイテム使用/装備
         if (Input.GetKeyDown(KeyCode.Z))
         {
             int itemId = PlayerInventory.obtainedItems[selectIndex];
-            if (itemId == 1) // 例：ID1が回復アイテム
+            if (itemId == 1) // 例: 回復
             {
-                var player = FindObjectOfType<PlayerController>();
-                if (player != null)
-                {
-                    player.Heal(10);
-                    Debug.Log("体力回復アイテムを使った！");
-                }
-                // 1. アイテムリストから削除
-                PlayerInventory.obtainedItems.RemoveAt(selectIndex);
-
-                // 2. 画面上のImageを消す
-                Destroy(displayedItems[selectIndex]);
-
-                // 3. 配列も詰め直す
-                var newList = new List<GameObject>(displayedItems);
-                newList.RemoveAt(selectIndex);
-                displayedItems = newList.ToArray();
-
-                // 4. 選択インデックスの調整
-                if (selectIndex >= displayedItems.Length)
-                    selectIndex = Mathf.Max(0, displayedItems.Length - 1);
-
-                // 5. 並び直し
-                for (int i = 0; i < displayedItems.Length; i++)
-                {
-                    displayedItems[i].GetComponent<RectTransform>().anchoredPosition = new Vector2(60 + 100 * i, 0);
-                }
-                UpdateHighlight();
+                UseHealItem();
             }
-            else
+            else if (itemId == 2) // 装備アイテム
             {
-                Debug.Log("そのアイテムは使えません！");
+                if (ui != null)
+                {
+                    // itemId, itemSprite, selectIndex, this(呼び出し元)を渡す
+                    ui.TryEquipItem(itemId, itemSprites[itemId], selectIndex, this);
+                }
             }
+        }
+    }
+
+    // 回復アイテム処理（使ったら消す）
+    void UseHealItem()
+    {
+        var player = FindObjectOfType<PlayerController>();
+        if (player != null)
+        {
+            player.Heal(10);
+            Debug.Log("体力回復アイテムを使った！");
+        }
+        RemoveItemAt(selectIndex); // アイテムを削除
+    }
+
+    // 指定インデックスのアイテムをリストとUIから削除（外部からも呼べるようpublicに）
+    public void RemoveItemAt(int index)
+    {
+        Debug.Log($"RemoveItemAt呼ばれた: index={index}");
+
+        PlayerInventory.obtainedItems.RemoveAt(index);
+        Destroy(displayedItems[index]);
+        var newList = new List<GameObject>(displayedItems);
+        newList.RemoveAt(index);
+        displayedItems = newList.ToArray();
+
+        if (selectIndex >= displayedItems.Length)
+            selectIndex = Mathf.Max(0, displayedItems.Length - 1);
+
+        RearrangeItems();
+        UpdateHighlight();
+    }
+
+    void RearrangeItems()
+    {
+        for (int i = 0; i < displayedItems.Length; i++)
+        {
+            displayedItems[i].GetComponent<RectTransform>().anchoredPosition = new Vector2(60 + 100 * i, 0);
         }
     }
 
