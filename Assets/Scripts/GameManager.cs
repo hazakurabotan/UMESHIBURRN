@@ -8,6 +8,11 @@ using TMPro;
 // ゲーム全体の進行・管理を担当するクラス
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance; // シングルトン用
+
+    public Sprite[] itemSprites;        // アイテムスプライト一覧（全シーンで共通）
+    public int equippedItemId = -1;     // 現在の装備ID（-1は未装備）
+
     // ==== UI関連 ====
     public GameObject mainImage;              // 結果表示用の画像（勝ち・負け画面など）
     public Sprite gameOverSpr;                // ゲームオーバー時に表示する画像
@@ -42,6 +47,37 @@ public class GameManager : MonoBehaviour
     public int stageScore = 0;               // ステージごとのスコア（アイテム取得等で加算）
 
     // ====== 初期化処理 ======
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(this.gameObject);
+
+            List<Sprite> loaded = new List<Sprite>();
+            for (int i = 0; i < 10; i++)
+            {
+                Sprite s = Resources.Load<Sprite>("ItemSprites/" + i);
+                if (s != null)
+                {
+                    loaded.Add(s);
+                    Debug.Log("読み込み成功: " + i + " = " + s.name);
+                }
+                else
+                {
+                    Debug.LogWarning("読み込み失敗: " + i);
+                }
+            }
+            itemSprites = loaded.ToArray();
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+
     void Start()
     {
         // 最初のシーン（"Stage1"）ならステージ番号を1にリセット
@@ -77,30 +113,47 @@ public class GameManager : MonoBehaviour
     // ====== 毎フレーム実行される進行管理 ======
     void Update()
     {
-        // --- アイテムパネルの開閉処理だけ分かりやすく抜粋 ---
-        if (!isItemPanelOpen && Input.GetKeyDown(KeyCode.A))
+        string sceneName = SceneManager.GetActiveScene().name;
+
+        // ==== BaseScene専用：アイテムパネルの開閉処理 ====
+        if (sceneName.Contains("Stage2")) // Stage2 などにも対応
         {
-            // Aでパネルを開く（ON）
-            if (itemDisplayPanel != null) itemDisplayPanel.SetActive(true);
-            if (playerController != null) playerController.enabled = false;
-            foreach (var enemy in enemyControllers) enemy.enabled = false;
-            boss = FindObjectOfType<BossSimpleJump>(); // Bossも管理したい場合
-            if (timeCnt != null) timeCnt.enabled = false;
-            isItemPanelOpen = true;
-        }
-        else if (isItemPanelOpen && Input.GetKeyDown(KeyCode.X))
-        {
-            // Xで閉じる（OFF）
-            if (itemDisplayPanel != null) itemDisplayPanel.SetActive(false);
-            if (playerController != null) playerController.enabled = true;
-            foreach (var enemy in enemyControllers) enemy.enabled = true;
-            if (boss != null) boss.enabled = true;
-            if (timeCnt != null) timeCnt.enabled = true;
-            isItemPanelOpen = false;
+            if (!isItemPanelOpen && Input.GetKeyDown(KeyCode.LeftShift))
+            {
+                if (itemDisplayPanel != null) itemDisplayPanel.SetActive(true);
+                if (playerController != null) playerController.enabled = false;
+                foreach (var enemy in enemyControllers) enemy.enabled = false;
+                boss = FindObjectOfType<BossSimpleJump>();
+                if (timeCnt != null) timeCnt.enabled = false;
+                isItemPanelOpen = true;
+            }
+            else if (isItemPanelOpen && Input.GetKeyDown(KeyCode.X))
+            {
+                if (itemDisplayPanel != null) itemDisplayPanel.SetActive(false);
+                if (playerController != null) playerController.enabled = true;
+                foreach (var enemy in enemyControllers) enemy.enabled = true;
+                if (boss != null) boss.enabled = true;
+                if (timeCnt != null) timeCnt.enabled = true;
+                isItemPanelOpen = false;
+            }
+
+            if (Input.GetKeyDown(KeyCode.LeftShift))
+            {
+                itemDisplayPanel.SetActive(!itemDisplayPanel.activeSelf);
+
+                if (itemDisplayPanel.activeSelf)
+                {
+                    ItemDisplayManager display = FindObjectOfType<ItemDisplayManager>();
+                    if (display != null)
+                    {
+                        display.RefreshDisplay(); // ←これ追加！
+                    }
+                }
+            }
+
+            if (isItemPanelOpen) return;
         }
 
-        // パネル開いてる間は他の処理はスキップ
-        if (isItemPanelOpen) return;
 
         // --- ゲームクリア時の処理 ---
         if (PlayerController.gameState == "gameclear")
@@ -175,25 +228,20 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            itemDisplayPanel.SetActive(!itemDisplayPanel.activeSelf);
-        }
-
+        // カットイン
         if (Input.GetKeyDown(KeyCode.S))
         {
             cutInImage.SetActive(true);
-
-            // ボイス再生
             if (cutInAudioSource != null && cutInVoiceClip != null)
             {
                 cutInAudioSource.PlayOneShot(cutInVoiceClip);
             }
-
-            Invoke(nameof(HideCutIn), 1.0f); // 1秒後に消す例
+            Invoke(nameof(HideCutIn), 1.0f);
         }
 
-        
+
+
+
     }
     void HideCutIn()
     {
@@ -269,4 +317,39 @@ public class GameManager : MonoBehaviour
             Debug.LogWarning("scoreText が Inspector でアサインされていません！");
         }
     }
+
+    public Sprite GetEquippedSprite()
+    {
+        if (itemSprites != null && equippedItemId >= 0 && equippedItemId < itemSprites.Length)
+        {
+            return itemSprites[equippedItemId];
+        }
+        return null;
+    }
+
+    public bool IsItemPanelOpen()
+    {
+        return itemDisplayPanel != null && itemDisplayPanel.activeSelf;
+    }
+
+    void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (itemDisplayPanel != null)
+            itemDisplayPanel.SetActive(false);
+        isItemPanelOpen = false;
+    }
+
+
+
+
 }

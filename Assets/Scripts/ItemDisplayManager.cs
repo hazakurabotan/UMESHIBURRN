@@ -5,7 +5,7 @@ using UnityEngine.UI;
 // アイテムリストの表示と管理を担当（装備処理は外部にまかせる）
 public class ItemDisplayManager : MonoBehaviour
 {
-    public Sprite[] itemSprites;         // アイテム画像（ID順に対応）
+   
     public RectTransform parent;         // アイテム画像を並べるパネル
     public GameObject itemImagePrefab;   // Image付きプレハブ
 
@@ -14,14 +14,32 @@ public class ItemDisplayManager : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("ItemDisplayManager.Start() 呼び出された");
+
         int count = PlayerInventory.obtainedItems.Count;
         displayedItems = new GameObject[count];
 
         for (int i = 0; i < count; i++)
         {
             int itemId = PlayerInventory.obtainedItems[i];
+            Debug.Log($"itemId[{i}] = {itemId}");
             GameObject go = Instantiate(itemImagePrefab, parent);
-            go.GetComponent<Image>().sprite = itemSprites[itemId];
+
+            // GameManagerからスプライトを取得
+            Sprite sprite = (itemId >= 0 && itemId < GameManager.Instance.itemSprites.Length)
+                ? GameManager.Instance.itemSprites[itemId]
+                : null;
+
+            if (sprite != null)
+            {
+                go.GetComponent<Image>().sprite = sprite;
+                Debug.Log($"itemId[{itemId}] 用 sprite = {sprite.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"sprite が null！ itemId = {itemId}");
+            }
+
             go.GetComponent<RectTransform>().anchoredPosition = new Vector2(60 + 100 * i, 0);
             displayedItems[i] = go;
         }
@@ -62,8 +80,12 @@ public class ItemDisplayManager : MonoBehaviour
             {
                 if (ui != null)
                 {
-                    // itemId, itemSprite, selectIndex, this(呼び出し元)を渡す
-                    ui.TryEquipItem(itemId, itemSprites[itemId], selectIndex, this);
+                    // ← 正しく itemId に対応する Sprite を GameManager から取得！
+                    Sprite sprite = (itemId >= 0 && itemId < GameManager.Instance.itemSprites.Length)
+    ? GameManager.Instance.itemSprites[itemId]
+    : null;
+
+                    ui.TryEquipItem(itemId, sprite, selectIndex, this);
                 }
             }
         }
@@ -114,4 +136,42 @@ public class ItemDisplayManager : MonoBehaviour
             displayedItems[i].transform.localScale = (i == selectIndex) ? Vector3.one * 1.2f : Vector3.one;
         }
     }
+
+    public void RefreshDisplay()
+    {
+        // 古いアイテムUIをすべて削除
+        foreach (Transform child in parent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        int count = PlayerInventory.obtainedItems.Count;
+        displayedItems = new GameObject[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            int itemId = PlayerInventory.obtainedItems[i];
+            GameObject go = Instantiate(itemImagePrefab, parent);
+
+            Sprite sprite = (itemId >= 0 && itemId < GameManager.Instance.itemSprites.Length)
+                ? GameManager.Instance.itemSprites[itemId]
+                : null;
+
+            if (sprite != null)
+            {
+                go.GetComponent<Image>().sprite = sprite;
+            }
+            else
+            {
+                Debug.LogWarning($"sprite が見つからない itemId = {itemId}");
+            }
+
+            go.GetComponent<RectTransform>().anchoredPosition = new Vector2(60 + 100 * i, 0);
+            displayedItems[i] = go;
+        }
+
+        selectIndex = 0;
+        UpdateHighlight();
+    }
+
 }

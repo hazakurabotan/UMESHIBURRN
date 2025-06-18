@@ -1,5 +1,7 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using static UnityEditor.Progress;
 
 // ショップ全体の流れを管理するスクリプト
 public class ShopManager : MonoBehaviour
@@ -41,14 +43,28 @@ public class ShopManager : MonoBehaviour
     // ====== 「ハイ」ボタン押下時の処理 ======
     public void OnConfirmYes()
     {
-        selector.items[currentItemIndex].gameObject.SetActive(false); // 商品を非表示に
-        confirmPanel.SetActive(false); // 確認ウィンドウを閉じる
-
-        // プレイヤーのインベントリに商品IDを追加
         PlayerInventory.obtainedItems.Add(currentItemIndex);
 
-        Debug.Log("現在のPlayerInventory: " + string.Join(",", PlayerInventory.obtainedItems));
+        // ↓以下のように「BaseScene」だけ開くよう制御（安全策）
+        if (SceneManager.GetActiveScene().name.Contains("Stage2"))
+        {
+            if (!GameManager.Instance.itemDisplayPanel.activeSelf)
+                GameManager.Instance.itemDisplayPanel.SetActive(true);
+        }
 
+        ItemDisplayManager displayManager = FindObjectOfType<ItemDisplayManager>();
+        if (displayManager != null)
+        {
+            displayManager.RefreshDisplay();
+        }
+        else
+        {
+            Debug.Log("Shopでは ItemDisplayManager が存在しないため表示スキップ");
+        }
+
+        confirmPanel.SetActive(false);
+
+        // 購入完了後、会話を進めてBaseSceneに戻る
         StartCoroutine(EndTalk());
     }
 

@@ -99,6 +99,9 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (GameManager.Instance != null && GameManager.Instance.IsItemPanelOpen())
+            return; // パネル表示中なら何もしない
+
         if (wallJumpLockTimer > 0f)
         {
             wallJumpLockTimer -= Time.deltaTime;

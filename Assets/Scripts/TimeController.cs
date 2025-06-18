@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // ゲーム中の制限時間や経過時間を管理するタイマースクリプト
 public class TimeController : MonoBehaviour
@@ -58,5 +59,16 @@ public class TimeController : MonoBehaviour
                 // Debug.Log("経過時間: " + displayTime);
             }
         }
+
+        {
+            if (GameManager.Instance != null)
+            {
+                if (SceneManager.GetActiveScene().name == "shop" || GameManager.Instance.IsItemPanelOpen())
+                    return; // shopシーンまたはパネル開いてたらカウント停止
+            }
+
+            // 通常の時間進行処理（既存の時間減少コード）
+        }
+
     }
 }

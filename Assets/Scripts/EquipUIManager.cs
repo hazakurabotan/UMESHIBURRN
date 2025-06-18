@@ -4,29 +4,37 @@ using UnityEngine.UI;
 // 装備スロットと装備確認ダイアログの管理
 public class EquipUIManager : MonoBehaviour
 {
-    public Image equipSlotImage;         // 装備枠（ここにアイテム画像が出る）
-    public GameObject confirmPanel;      // 確認パネル
-    public Image yesButtonImage;         // 「はい」ボタンの画像
-    public Image noButtonImage;          // 「いいえ」ボタンの画像
+    public Image equipSlotImage;
+    public GameObject confirmPanel;
+    public Image yesButtonImage;
+    public Image noButtonImage;
 
-    public bool IsConfirming() { return isConfirming; }
-
-    public Sprite emptySlotSprite;       // 装備なしの画像
-    // 装備したいアイテム画像は実行時に受け取るので、ここには固定しない
+    public Sprite emptySlotSprite;
 
     int select = 0; // 0:Yes 1:No
     bool isConfirming = false;
 
-    // 装備候補アイテム情報（一時的に保持）
     int pendingItemId = -1;
     Sprite pendingSprite = null;
     int pendingItemIndex = -1;
     ItemDisplayManager pendingManager = null;
 
+    public bool IsConfirming() { return isConfirming; }
+
     void Start()
     {
-        equipSlotImage.sprite = emptySlotSprite;
-        Debug.Log($"装備枠画像セット: {pendingSprite?.name}");
+        // 装備中の画像を GameManager から取得して反映
+        Sprite sprite = GameManager.Instance.GetEquippedSprite();
+        if (sprite != null)
+        {
+            equipSlotImage.sprite = sprite;
+            equipSlotImage.enabled = true;
+        }
+        else
+        {
+            equipSlotImage.enabled = false;
+        }
+
         confirmPanel.SetActive(false);
         UpdateButtonUI();
     }
@@ -35,13 +43,11 @@ public class EquipUIManager : MonoBehaviour
     {
         if (!isConfirming) return;
 
-        // ←→で選択
         if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.LeftArrow))
         {
             select = 1 - select;
             UpdateButtonUI();
         }
-        // Zで決定
         if (Input.GetKeyDown(KeyCode.Z))
         {
             if (select == 0)
@@ -49,18 +55,21 @@ public class EquipUIManager : MonoBehaviour
             else
                 OnClickNo();
         }
-        // Xでキャンセル
         if (Input.GetKeyDown(KeyCode.X))
         {
             OnClickNo();
         }
     }
 
-    // 装備アイテムが選択された時に呼ばれる。必要な情報を全て受け取る
     public void TryEquipItem(int itemId, Sprite itemSprite, int itemIndex, ItemDisplayManager manager)
     {
+        if (itemSprite == null)
+        {
+            Debug.LogWarning("装備しようとしている sprite が null です！itemId = " + itemId);
+            return;
+        }
 
-        Debug.Log($"TryEquipItem呼び出し: itemId={itemId}, sprite={itemSprite?.name}, itemIndex={itemIndex}");
+        Debug.Log($"TryEquipItem呼び出し: itemId={itemId}, sprite={itemSprite.name}, itemIndex={itemIndex}");
 
         pendingItemId = itemId;
         pendingSprite = itemSprite;
@@ -73,31 +82,26 @@ public class EquipUIManager : MonoBehaviour
         UpdateButtonUI();
     }
 
-    // 「はい」：実際に装備枠へ表示＆リスト/画面からアイテムを削除
     void OnClickYes()
     {
-        Debug.Log($"OnClickYes: pendingItemId={pendingItemId}, pendingSprite={pendingSprite?.name}, pendingItemIndex={pendingItemIndex}");
-
         equipSlotImage.sprite = pendingSprite;
+        equipSlotImage.enabled = true;
+
+        GameManager.Instance.equippedItemId = pendingItemId; // ← 重要！
+
         confirmPanel.SetActive(false);
         isConfirming = false;
+
         if (pendingManager != null && pendingItemIndex >= 0)
             pendingManager.RemoveItemAt(pendingItemIndex);
-
-        // 追加効果など
-        var player = FindObjectOfType<PlayerController>();
-        if (player != null)
-            Debug.Log($"現在のプレイヤー攻撃力: {player.bulletDamage}");
     }
 
-
-    // 「いいえ」：何もせず閉じる
     void OnClickNo()
     {
+        Debug.Log("イイエを押した。パネルを閉じて通常選択画面へ戻す");
         confirmPanel.SetActive(false);
         isConfirming = false;
     }
-
 
     void UpdateButtonUI()
     {
