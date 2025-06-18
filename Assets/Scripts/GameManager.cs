@@ -24,6 +24,8 @@ public class GameManager : MonoBehaviour
     public AudioSource cutInAudioSource; // カットイン用のAudioSource
     public AudioClip cutInVoiceClip;     // カットイン時に流すボイス
     public GameObject laserPrefab;
+    public GameObject HpBarPanel;
+
 
     //アイテムパネル関連
     public GameObject itemDisplayPanel;       //ゲーム中にAキーでアイテムパネルの表示/非表示」
@@ -124,6 +126,7 @@ public class GameManager : MonoBehaviour
                 if (playerController != null) playerController.enabled = false;
                 foreach (var enemy in enemyControllers) enemy.enabled = false;
                 boss = FindObjectOfType<BossSimpleJump>();
+                if (boss != null) boss.enabled = false;
                 if (timeCnt != null) timeCnt.enabled = false;
                 isItemPanelOpen = true;
             }
@@ -337,16 +340,43 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (itemDisplayPanel != null)
             itemDisplayPanel.SetActive(false);
         isItemPanelOpen = false;
+
+        // HPバーの制御
+        if (HpBarPanel == null)
+        {
+            HpBarPanel = GameObject.Find("HpBarPanel");
+        }
+        if (HpBarPanel != null)
+        {
+            if (scene.name.Contains("Stage") || scene.name.Contains("BaseScene"))
+                HpBarPanel.SetActive(true);
+            else
+                HpBarPanel.SetActive(false);
+        }
+
+        // タイマー制御：Shopシーンでは停止、それ以外では再開
+        if (timeCnt == null)
+        {
+            timeCnt = GetComponent<TimeController>();
+        }
+        if (timeCnt != null)
+        {
+            if (scene.name.Contains("Shop"))
+            {
+                Debug.Log("Shopシーンなのでタイム停止");
+                timeCnt.enabled = false;
+            }
+            else
+            {
+                Debug.Log("通常シーンなのでタイム再開");
+                timeCnt.enabled = true;
+            }
+        }
     }
 
 

@@ -28,47 +28,37 @@ public class TimeController : MonoBehaviour
     // ====== 毎フレーム呼ばれる ======
     void Update()
     {
-        // タイマーが止まっていなければ（まだ終了していなければ）
-        if (!isTimeOver)
+        // ======= Shopシーンまたはパネル中は時間を止める =======
+        if (GameManager.Instance != null)
         {
-            times += Time.deltaTime; // 1フレームぶんの時間を加算（秒単位）
-
-            if (isCountDown)
-            {
-                // === カウントダウン処理 ===
-                displayTime = gameTime - times; // 残り時間を計算
-                // Debug.Log("カウントダウン中: " + displayTime);
-
-                if (displayTime <= 0.0f)
-                {
-                    displayTime = 0.0f; // 0未満にならないように補正
-                    isTimeOver = true;  // タイマー終了
-                }
-            }
-            else
-            {
-                // === カウントアップ処理 ===
-                displayTime = times; // 経過時間を表示用に格納
-
-                if (displayTime >= gameTime)
-                {
-                    displayTime = gameTime; // 最大時間以上にならないように補正
-                    isTimeOver = true;      // タイマー終了
-                }
-
-                // Debug.Log("経過時間: " + displayTime);
-            }
+            string sceneName = SceneManager.GetActiveScene().name.ToLower();
+            if (sceneName.Contains("shop") || GameManager.Instance.IsItemPanelOpen())
+                return;
         }
 
+        // ======= 時間が止まっている状態なら処理しない =======
+        if (isTimeOver) return;
+
+        // ======= 時間カウント処理開始 =======
+        times += Time.deltaTime;
+
+        if (isCountDown)
         {
-            if (GameManager.Instance != null)
+            displayTime = gameTime - times;
+            if (displayTime <= 0.0f)
             {
-                if (SceneManager.GetActiveScene().name == "shop" || GameManager.Instance.IsItemPanelOpen())
-                    return; // shopシーンまたはパネル開いてたらカウント停止
+                displayTime = 0.0f;
+                isTimeOver = true;
             }
-
-            // 通常の時間進行処理（既存の時間減少コード）
         }
-
+        else
+        {
+            displayTime = times;
+            if (displayTime >= gameTime)
+            {
+                displayTime = gameTime;
+                isTimeOver = true;
+            }
+        }
     }
 }
