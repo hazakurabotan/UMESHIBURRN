@@ -510,9 +510,10 @@ public class PlayerController : MonoBehaviour
         UpdateHpUI();
     }
 
+    // HP減った時は
     void UpdateHpUI()
     {
         if (hpBar != null)
-            hpBar.SetHp(currentHP);
+            hpBar.SetHp(currentHP, maxHP); // maxHPも渡すと柔軟
     }
 }

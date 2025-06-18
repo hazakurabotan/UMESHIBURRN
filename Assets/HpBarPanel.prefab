@@ -34,7 +34,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2.1, y: 3.01}
+  m_AnchoredPosition: {x: 4.47, y: 2.9}
   m_SizeDelta: {x: 0.8488, y: 1.709}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9110315409061749724
@@ -84,6 +84,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 297811011535368657}
+  - component: {fileID: 8702267915811785756}
   m_Layer: 0
   m_Name: HpBarPanel
   m_TagString: Untagged
@@ -107,3 +108,20 @@ Transform:
   - {fileID: 4255371329364621259}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8702267915811785756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7195490282054025739}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73e7f66c96754da4b8a0106081ad6663, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lanternImage: {fileID: 6902935864830530821}
+  fullFire: {fileID: 21300000, guid: f0716155ae227c14a9215ee935814a7e, type: 3}
+  middleFire: {fileID: 21300000, guid: 2d7ad2404ed4eab479ac04267a9caeba, type: 3}
+  smallFire: {fileID: 21300000, guid: f826e4140448a734e9e447e13ce06450, type: 3}
+  noFire: {fileID: 21300000, guid: ae65c9bb5e93e954aa90fae78221cbba, type: 3}

@@ -96,7 +96,7 @@ Transform:
   m_GameObject: {fileID: 3315595117534700997}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8.717033, y: -0.3330722, z: 0}
+  m_LocalPosition: {x: -7.41, y: -4.46, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -272,7 +272,7 @@ MonoBehaviour:
   deathClip: {fileID: 8300000, guid: 1a51af09bd88ae74aa175607c3ebaec9, type: 3}
   hpBar: {fileID: 0}
   maxHP: 3
-  dashSpeed: 6
+  dashSpeed: 9
   dashDoubleTapTime: 0.3
   afterImagePrefab: {fileID: 1931263073724592993, guid: a388e8f674c1e5d479246b11be724384, type: 3}
   afterImageInterval: 0.05
@@ -283,6 +283,7 @@ MonoBehaviour:
   goalAnime: PlayerGoal
   deadAnime: PlayerOver
   score: 0
+  bulletDamage: 1
   ropePrefab: {fileID: 3552905523116729988, guid: 1c5567760cb4a7d4980854f6bd4d0f0e, type: 3}
   ropeSpawnPoint: {fileID: 7454492243263531973, guid: 1c5567760cb4a7d4980854f6bd4d0f0e, type: 3}
   climbSpeed: 3

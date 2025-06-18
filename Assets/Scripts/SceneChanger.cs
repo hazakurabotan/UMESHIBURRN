@@ -1,20 +1,30 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// このスクリプトは「ワープドア」や「ゴール」などのトリガーにアタッチします
-// プレイヤーが触れると次のシーンへ移動します
 public class SceneChanger : MonoBehaviour
 {
-    public string nextSceneName = "Stage2"; // 遷移先シーンの名前（Inspectorで指定）
+    public string nextSceneName = "Stage2"; // Inspectorで遷移先シーン名を指定
 
-    // 他のCollider2Dがこのトリガーに入った時に呼ばれる
-    private void OnTriggerEnter2D(Collider2D other)
+    private bool playerInRange = false;
+
+    void Update()
     {
-        // プレイヤー（Playerタグ）が触れた場合のみ
-        if (other.CompareTag("Player"))
+        // プレイヤーが範囲内で上キー押した時のみ遷移
+        if (playerInRange && (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)))
         {
-            // 指定したシーンに切り替える
-            SceneManager.LoadScene(nextSceneName);
+            SceneManager.LoadScene(nextSceneName); // ← Inspectorで指定できる！
         }
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+            playerInRange = true;
+    }
+
+    void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+            playerInRange = false;
     }
 }
