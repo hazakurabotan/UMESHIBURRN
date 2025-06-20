@@ -15,6 +15,7 @@ TagManager:
   - Ground
   - Boss
   - Talk
+  - effect
   layers:
   - Default
   - TransparentFX
