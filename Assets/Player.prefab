@@ -81,7 +81,7 @@ GameObject:
   - component: {fileID: 158573305089694368}
   - component: {fileID: 1313850815964312351}
   m_Layer: 0
-  m_Name: Player 1
+  m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -96,7 +96,7 @@ Transform:
   m_GameObject: {fileID: 3315595117534700997}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.41, y: -4.46, z: 0}
+  m_LocalPosition: {x: -8.717033, y: -0.3330722, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -270,7 +270,7 @@ MonoBehaviour:
   invincibleTime: 3
   audioSource: {fileID: 158573305089694368}
   deathClip: {fileID: 8300000, guid: 1a51af09bd88ae74aa175607c3ebaec9, type: 3}
-  hpBar: {fileID: 0}
+  hpBar: {fileID: 8702267915811785756, guid: 4c5691e0189b6ff49b1abe00c1e24d23, type: 3}
   maxHP: 3
   dashSpeed: 9
   dashDoubleTapTime: 0.3

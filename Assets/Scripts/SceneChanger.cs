@@ -6,6 +6,8 @@ public class SceneChanger : MonoBehaviour
     public string nextSceneName = "Stage2"; // Inspector‚Å‘JˆÚæƒV[ƒ“–¼‚ğw’è
 
     private bool playerInRange = false;
+    public string sceneName = "Stage1";
+
 
     void Update()
     {
@@ -27,4 +29,5 @@ public class SceneChanger : MonoBehaviour
         if (other.CompareTag("Player"))
             playerInRange = false;
     }
+
 }

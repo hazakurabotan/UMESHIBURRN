@@ -17,12 +17,14 @@ public class FireWavyLine : MonoBehaviour
     void Update()
     {
         float time = Time.time * waveSpeed;
+        Vector3 basePos = transform.position; // オブジェクトの位置を基準に
+
         for (int i = 0; i < pointCount; i++)
         {
             float x = (float)i / (pointCount - 1) * length;
             float y = Mathf.Sin(x * 10f + time + i) * waveHeight * Mathf.PerlinNoise(time, x);
-            // ↓上方向に伸びる炎（座標は好きに調整してね）
-            lineRenderer.SetPosition(i, new Vector3(x, y, 0));
+            // ここが違う！
+            lineRenderer.SetPosition(i, basePos + new Vector3(x, y, 0));
         }
     }
 }

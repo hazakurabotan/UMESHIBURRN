@@ -1,64 +1,73 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// ƒQ[ƒ€’†‚Ì§ŒÀŠÔ‚âŒo‰ßŠÔ‚ğŠÇ—‚·‚éƒ^ƒCƒ}[ƒXƒNƒŠƒvƒg
+// ã‚²ãƒ¼ãƒ ä¸­ã®åˆ¶é™æ™‚é–“ã‚„çµŒéæ™‚é–“ã‚’ç®¡ç†ã™ã‚‹ã‚¿ã‚¤ãƒãƒ¼ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
 public class TimeController : MonoBehaviour
 {
-    // === İ’è—pƒpƒ‰ƒ[ƒ^ ===
-    public bool isCountDown = true; // true‚È‚çƒJƒEƒ“ƒgƒ_ƒEƒ“Afalse‚È‚çƒJƒEƒ“ƒgƒAƒbƒv
-    public float gameTime = 0;      // ƒQ[ƒ€‚ÌÅ‘åŠÔi•b”‚Åİ’èj
-    public bool isTimeOver = false; // true‚È‚çƒ^ƒCƒ}[’â~iŠÔØ‚ê‚â–Ú•W’B¬j
-    public float displayTime = 0;   // UI•\¦—p‚Ìc‚èŠÔ‚Ü‚½‚ÍŒo‰ßŠÔ
+    // === è¨­å®šç”¨ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ ===
+    public bool isCountDown = true; // trueãªã‚‰ã‚«ã‚¦ãƒ³ãƒˆãƒ€ã‚¦ãƒ³ã€falseãªã‚‰ã‚«ã‚¦ãƒ³ãƒˆã‚¢ãƒƒãƒ—
+    public float gameTime = 0;      // ã‚²ãƒ¼ãƒ ã®æœ€å¤§æ™‚é–“ï¼ˆç§’æ•°ã§è¨­å®šï¼‰
+    public bool isTimeOver = false; // trueãªã‚‰ã‚¿ã‚¤ãƒãƒ¼åœæ­¢ï¼ˆæ™‚é–“åˆ‡ã‚Œã‚„ç›®æ¨™é”æˆï¼‰
+    public float displayTime = 0;   // UIè¡¨ç¤ºç”¨ã®æ®‹ã‚Šæ™‚é–“ã¾ãŸã¯çµŒéæ™‚é–“
 
-    float times = 0; // “à•”‚Åg‚¤Œo‰ßŠÔƒJƒEƒ“ƒg—pi–ˆƒtƒŒ[ƒ€‰ÁZj
+    float times = 0; // å†…éƒ¨ã§ä½¿ã†çµŒéæ™‚é–“ã‚«ã‚¦ãƒ³ãƒˆç”¨ï¼ˆæ¯ãƒ•ãƒ¬ãƒ¼ãƒ åŠ ç®—ï¼‰
 
-    // ====== ƒQ[ƒ€ŠJn‚É1‰ñ‚¾‚¯ŒÄ‚Î‚ê‚é ======
+    // ====== ã‚²ãƒ¼ãƒ é–‹å§‹æ™‚ã«1å›ã ã‘å‘¼ã°ã‚Œã‚‹ ======
     void Start()
     {
         if (isCountDown)
         {
-            // ƒJƒEƒ“ƒgƒ_ƒEƒ“‚Ìê‡‚ÍÅ‰‚ÉÅ‘åŠÔ‚©‚çƒXƒ^[ƒg
+            // ã‚«ã‚¦ãƒ³ãƒˆãƒ€ã‚¦ãƒ³ã®å ´åˆã¯æœ€åˆã«æœ€å¤§æ™‚é–“ã‹ã‚‰ã‚¹ã‚¿ãƒ¼ãƒˆ
             displayTime = gameTime;
         }
-        // ƒJƒEƒ“ƒgƒAƒbƒv‚Í0‚©‚ç©“®ƒXƒ^[ƒg‚È‚Ì‚Å‰½‚à‚µ‚È‚­‚ÄOK
+        // ã‚«ã‚¦ãƒ³ãƒˆã‚¢ãƒƒãƒ—æ™‚ã¯0ã‹ã‚‰è‡ªå‹•ã‚¹ã‚¿ãƒ¼ãƒˆãªã®ã§ä½•ã‚‚ã—ãªãã¦OK
     }
 
-    // ====== –ˆƒtƒŒ[ƒ€ŒÄ‚Î‚ê‚é ======
+    // ====== æ¯ãƒ•ãƒ¬ãƒ¼ãƒ å‘¼ã°ã‚Œã‚‹ ======
     void Update()
     {
-        // ======= ShopƒV[ƒ“‚Ü‚½‚Íƒpƒlƒ‹’†‚ÍŠÔ‚ğ~‚ß‚é =======
+        // âœ… GameManagerãŒã‚ã£ã¦ã€shopã‚·ãƒ¼ãƒ³ or ãƒ‘ãƒãƒ«ä¸­ãªã‚‰å‡¦ç†è‡ªä½“ã‚’æ­¢ã‚ã‚‹
         if (GameManager.Instance != null)
         {
-            string sceneName = SceneManager.GetActiveScene().name.ToLower();
-            if (sceneName.Contains("shop") || GameManager.Instance.IsItemPanelOpen())
-                return;
-        }
-
-        // ======= ŠÔ‚ª~‚Ü‚Á‚Ä‚¢‚éó‘Ô‚È‚çˆ—‚µ‚È‚¢ =======
-        if (isTimeOver) return;
-
-        // ======= ŠÔƒJƒEƒ“ƒgˆ—ŠJn =======
-        times += Time.deltaTime;
-
-        if (isCountDown)
-        {
-            displayTime = gameTime - times;
-            if (displayTime <= 0.0f)
+            if (SceneManager.GetActiveScene().name == "shop" || GameManager.Instance.IsItemPanelOpen())
             {
-                displayTime = 0.0f;
-                isTimeOver = true;
+                return; // ã‚¿ã‚¤ãƒãƒ¼æ­¢ã‚ã‚‹ï¼ˆã‚«ã‚¦ãƒ³ãƒˆã—ãªã„ï¼‰
             }
         }
-        else
+
+        // ã‚¿ã‚¤ãƒãƒ¼ãŒæ­¢ã¾ã£ã¦ã„ãªã‘ã‚Œã°ï¼ˆã¾ã çµ‚äº†ã—ã¦ã„ãªã‘ã‚Œã°ï¼‰
+        if (!isTimeOver)
         {
-            displayTime = times;
-            if (displayTime >= gameTime)
+            times += Time.deltaTime;
+
+            if (isCountDown)
             {
-                displayTime = gameTime;
-                isTimeOver = true;
+                displayTime = gameTime - times;
+
+                if (displayTime <= 0.0f)
+                {
+                    displayTime = 0.0f;
+                    isTimeOver = true;
+                }
+            }
+            else
+            {
+                displayTime = times;
+
+                if (displayTime >= gameTime)
+                {
+                    displayTime = gameTime;
+                    isTimeOver = true;
+                }
             }
         }
+    }
+    public void ResetTimer()
+    {
+        times = 0f;
+        isTimeOver = false;
+        displayTime = gameTime; // ã‚«ã‚¦ãƒ³ãƒˆãƒ€ã‚¦ãƒ³ç”¨ï¼ˆã‚«ã‚¦ãƒ³ãƒˆã‚¢ãƒƒãƒ—ã¯å¿…è¦ã«å¿œã˜ã¦èª¿æ•´ï¼‰
     }
 }
