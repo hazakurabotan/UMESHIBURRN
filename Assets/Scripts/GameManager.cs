@@ -14,6 +14,8 @@ public class GameManager : MonoBehaviour
     public Sprite normalSprite;
     public Sprite revivedSprite;
 
+    public static bool fromRestart = false;
+
     public GameObject videoCanvas;         // 動画表示用Canvas
     public UnityEngine.Video.VideoPlayer videoPlayer;
     public float revivalChance = 0.4f;     // 復活確率
@@ -39,6 +41,8 @@ public class GameManager : MonoBehaviour
     public AudioSource cutInAudioSource;// カットイン音用
     public AudioClip cutInVoiceClip;    // カットイン声
     public GameObject laserPrefab;      // レーザープレハブ
+
+    private bool isReviving = false;
 
     // アイテムパネル関連
     public GameObject itemDisplayPanel;
@@ -75,15 +79,17 @@ public class GameManager : MonoBehaviour
             }
             itemSprites = loaded.ToArray();
         }
-        else
+        else if (Instance != this)
         {
-            Destroy(gameObject); // 2個目以降は自動で削除
+            Destroy(this.gameObject); // 2個目以降は自動で削除
         }
     }
 
     // ---------------------- Start ----------------------
     void Start()
     {
+        StartCoroutine(InitAfterFrame());
+
 
         // --- 動画再生まわりを確実にOFF ---
         if (videoCanvas != null) videoCanvas.SetActive(false); // Canvas非表示
@@ -92,6 +98,24 @@ public class GameManager : MonoBehaviour
             videoPlayer.Stop();
             videoPlayer.frame = 0;
         }
+
+        // 一時的にリスタートかどうかで復活処理を無効化
+        if (fromRestart)
+        {
+            triedRevival = true;
+            fromRestart = false; // 忘れずリセット！
+        }
+
+        //
+        //if (player != null)
+        //{
+        //    PlayerController pc = player.GetComponent<PlayerController>();
+        //    if (pc != null)
+        //    {
+        //        pc.Heal(pc.maxHP);
+        //        pc.UpdateHpUI();
+        //    }
+        //}
 
 
         // ステージ1ならcurrentStageを1に初期化
@@ -111,11 +135,61 @@ public class GameManager : MonoBehaviour
         // ボタン類も非表示
         if (restartButton != null) restartButton.SetActive(false);
         if (nextButton != null) nextButton.SetActive(false);
+
+
     }
+
+
+    IEnumerator InitAfterFrame()
+    {
+        yield return null;
+
+        if (fromRestart)
+        {
+            triedRevival = true;
+            fromRestart = false;
+
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                player = playerObj;
+                PlayerController pc = player.GetComponent<PlayerController>();
+                if (pc != null)
+                {
+                    pc.Heal(pc.maxHP);
+
+                    // HPバーの参照を明示的にリセット
+                    if (pc.hpBar == null)
+                        pc.hpBar = FindObjectOfType<HpBarController>();
+
+                    yield return null; // 1フレーム待つとUIリンクが安定することがある
+                    pc.UpdateHpUI();
+
+                    Debug.Log($"[RESTART] Player HP: {pc.currentHP} / Max: {pc.maxHP}, hpBar:{(pc.hpBar == null ? "NULL" : "OK")}");
+                }
+            }
+
+            // 演出キャンバスをもう一度隠す（念のため）
+            if (videoCanvas != null)
+                videoCanvas.SetActive(false);
+
+            if (videoPlayer != null)
+            {
+                videoPlayer.Stop();
+                videoPlayer.frame = 0;
+            }
+
+            PlayerController.gameState = "playing";
+        }
+    }
+
+
 
     // ---------------------- Update ----------------------
     void Update()
     {
+
+
         // --- タイマーのUI表示 ---
         if (timeCnt != null && timeText != null)
         {
@@ -145,9 +219,8 @@ public class GameManager : MonoBehaviour
             // 状態遷移
             PlayerController.gameState = "gameend";
         }
-        else if (PlayerController.gameState == "gameover" && !triedRevival)
+        else if (PlayerController.gameState == "gameover" && !triedRevival && !isReviving)
         {
-            // --- 復活判定処理 ---
             triedRevival = true;
 
             if (Random.value < revivalChance)
@@ -156,7 +229,7 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                // 通常のゲームオーバー演出
+                // 復活に失敗したときだけ表示！
                 mainImage.SetActive(false);
                 panel.SetActive(true);
                 if (restartButton != null) restartButton.SetActive(true);
@@ -168,6 +241,8 @@ public class GameManager : MonoBehaviour
         }
         else if (PlayerController.gameState == "gameover")
         {
+            if (isReviving) return; // ★復活中なら何もしない！
+
             // 既に復活試行済みでゲームオーバーのままなら通常UI表示
             mainImage.SetActive(false);
             panel.SetActive(true);
@@ -177,6 +252,7 @@ public class GameManager : MonoBehaviour
 
             PlayerController.gameState = "gameend";
         }
+
         else if (PlayerController.gameState == "playing")
         {
             // プレイヤーのスコア加算処理
@@ -221,6 +297,8 @@ public class GameManager : MonoBehaviour
             }
             Invoke(nameof(HideCutIn), 1.0f); // 1秒後にHideCutInを呼ぶ
         }
+
+
     }
 
     // --- カットイン画像を隠し、レーザー演出発射 ---
@@ -256,7 +334,9 @@ public class GameManager : MonoBehaviour
     // --- リスタートボタン処理 ---
     public void OnRestartButton()
     {
-        triedRevival = false;
+        fromRestart = true;
+
+        triedRevival = true;
 
         // 1. UI全部非表示
         if (panel != null) panel.SetActive(false);
@@ -325,6 +405,10 @@ public class GameManager : MonoBehaviour
     // --- シーン切替時にUI等をリセット ---
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        triedRevival = false;
+        isReviving = false;
+
+
         // アイテムパネルなど全部非表示
         if (itemDisplayPanel != null)
             itemDisplayPanel.SetActive(false);
@@ -348,11 +432,64 @@ public class GameManager : MonoBehaviour
             else
                 timeCnt.enabled = true;
         }
+
+        // プレイヤー取得して体力全回復
+        if (fromRestart)
+        {
+            triedRevival = true;
+            fromRestart = false;
+
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                player = playerObj;
+                PlayerController pc = player.GetComponent<PlayerController>();
+                if (pc != null)
+                {
+                    pc.hpBar = FindObjectOfType<HpBarController>();
+
+                    pc.Heal(pc.maxHP);
+                    pc.UpdateHpUI();
+
+                    Debug.Log($"[Restart後] currentHP={pc.currentHP}, hpBar={(pc.hpBar == null ? "NULL" : "OK")}");
+                }
+            }
+
+            // videoCanvas/videoPlayerの再取得（万一に備えて）
+            if (videoCanvas == null)
+                videoCanvas = GameObject.Find("videoCanvas"); // 名前は正確に
+
+            videoCanvas?.SetActive(false);
+
+            if (videoPlayer == null)
+                videoPlayer = FindObjectOfType<UnityEngine.Video.VideoPlayer>();
+
+            videoPlayer?.Stop();
+            videoPlayer.frame = 0;
+
+            // 明示的に gameState を playing にしておく（念のため）
+            PlayerController.gameState = "playing";
+        }
+
     }
 
     IEnumerator PlayRevivalSequence()
     {
-        if (player != null) player.SetActive(false);
+        isReviving = true;
+
+        if (player != null)
+        {
+            // RigidbodyとColliderを取得
+            Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+            Collider2D col = player.GetComponent<Collider2D>();
+
+            // RigidbodyとColliderを一時停止
+            if (rb != null) rb.simulated = false;
+            if (col != null) col.enabled = false;
+
+            // 非表示化
+            player.SetActive(false);
+        }
 
         if (videoCanvas != null) videoCanvas.SetActive(true);
         if (videoPlayer != null)
@@ -371,23 +508,51 @@ public class GameManager : MonoBehaviour
 
         if (player != null)
         {
-            // プレイヤーの位置をセット
-            player.transform.position = new Vector3(-8.97f, -0.29f, 0f);
+            Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+            Collider2D col = player.GetComponent<Collider2D>();
 
-            // 一旦無効→次のフレームで有効にして物理演算を安定させる
-            yield return new WaitForFixedUpdate(); // ← これがポイント
+            // 位置を復活地点に設定（床にしっかり立つ高さを確認して設定！）
+            player.transform.position = new Vector3(-8.97f, 0.0f, 0f);
+
+            yield return new WaitForFixedUpdate(); // 物理エンジンの安定を待つ
+
+            // 物理再有効化
+            if (rb != null)
+            {
+                rb.velocity = Vector2.zero; // 落下速度をリセット
+                rb.simulated = true;
+            }
+
+            if (col != null) col.enabled = true;
+
             player.SetActive(true);
 
-            // スプライト差し替え
+            // スプライト切り替え
             SpriteRenderer sr = player.GetComponent<SpriteRenderer>();
             if (sr != null && revivedSprite != null)
                 sr.sprite = revivedSprite;
         }
 
-        // 状態復帰
         if (timeCnt != null) timeCnt.isTimeOver = false;
         PlayerController.gameState = "playing";
+
+        if (restartButton != null)
+            restartButton.SetActive(false);
+
+        if (player != null)
+        {
+            PlayerController pc = player.GetComponent<PlayerController>();
+            if (pc != null)
+            {
+                pc.Heal(pc.maxHP);
+                pc.UpdateHpUI();
+            }
+        }
+
+        isReviving = false; // ★復活終了！
+
     }
+
 
 
 

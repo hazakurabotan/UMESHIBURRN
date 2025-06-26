@@ -57,7 +57,7 @@ public class PlayerController : MonoBehaviour
 
     // プレイヤーの最大HPと現在HP
     public int maxHP = 3;
-    int currentHP;
+    public int currentHP;
 
     // ダッシュ関連
     public float dashSpeed = 6.0f;
@@ -112,9 +112,13 @@ public class PlayerController : MonoBehaviour
     // --- 初期化 ---
     void Start()
     {
-        // HPを最大値で初期化
+        Debug.Log("PlayerController.Start呼ばれた hpBar=" + (hpBar == null ? "null" : "OK"));
+
+        // SceneReload 時に Inspector のリンクが切れるので
+        hpBar = FindObjectOfType<HpBarController>();
         currentHP = maxHP;
-        if (hpBar != null) hpBar.SetHp(currentHP);
+        hpBar?.SetHp(currentHP);
+        UpdateHpUI();
 
         // 各種コンポーネント取得
         rbody = GetComponent<Rigidbody2D>();
@@ -126,8 +130,7 @@ public class PlayerController : MonoBehaviour
         oldAnime = stopAnime;
         gameState = "playing";
 
-        // HPバーUIの表示も更新
-        UpdateHpUI();
+        
     }
 
     // --- 毎フレーム呼ばれる処理（プレイヤーの操作など） ---
@@ -554,14 +557,28 @@ public class PlayerController : MonoBehaviour
     {
         currentHP += amount;
         currentHP = Mathf.Clamp(currentHP, 0, maxHP);
+
+        // ★必ずUI更新
+        if (hpBar == null)
+            hpBar = FindObjectOfType<HpBarController>();
         if (hpBar != null) hpBar.SetHp(currentHP);
     }
 
     // --- HP UIを更新する関数 ---
-    void UpdateHpUI()
+    public void UpdateHpUI()
     {
+        // hpBarがnullなら自動で探してセット（ここ超重要！）
+        if (hpBar == null)
+        {
+            hpBar = FindObjectOfType<HpBarController>();
+            if (hpBar == null)
+            {
+                Debug.LogWarning("HpBarControllerが見つかりませんでした");
+                return;
+            }
+        }
         Debug.Log("UpdateHpUI呼ばれた currentHP=" + currentHP + " hpBar=" + (hpBar == null ? "null" : "OK"));
-        if (hpBar != null) hpBar.SetHp(currentHP);
+        hpBar.SetHp(currentHP, maxHP);
     }
 
 }
