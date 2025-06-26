@@ -8,6 +8,19 @@ using TMPro;                       // TextMeshPro用
 // ゲーム全体の状態・UI・スコア・アイテム管理などを担う
 public class GameManager : MonoBehaviour
 {
+
+    // 復活演出関連
+    public GameObject player;
+    public Sprite normalSprite;
+    public Sprite revivedSprite;
+
+    public GameObject videoCanvas;         // 動画表示用Canvas
+    public UnityEngine.Video.VideoPlayer videoPlayer;
+    public float revivalChance = 0.4f;     // 復活確率
+
+    private bool triedRevival = false;
+
+
     // --- シングルトンパターン用 ---
     public static GameManager Instance;
 
@@ -71,6 +84,16 @@ public class GameManager : MonoBehaviour
     // ---------------------- Start ----------------------
     void Start()
     {
+
+        // --- 動画再生まわりを確実にOFF ---
+        if (videoCanvas != null) videoCanvas.SetActive(false); // Canvas非表示
+        if (videoPlayer != null)
+        {
+            videoPlayer.Stop();
+            videoPlayer.frame = 0;
+        }
+
+
         // ステージ1ならcurrentStageを1に初期化
         if (SceneManager.GetActiveScene().name == "Stage1") currentStage = 1;
 
@@ -122,22 +145,41 @@ public class GameManager : MonoBehaviour
             // 状態遷移
             PlayerController.gameState = "gameend";
         }
+        else if (PlayerController.gameState == "gameover" && !triedRevival)
+        {
+            // --- 復活判定処理 ---
+            triedRevival = true;
+
+            if (Random.value < revivalChance)
+            {
+                StartCoroutine(PlayRevivalSequence());
+            }
+            else
+            {
+                // 通常のゲームオーバー演出
+                mainImage.SetActive(false);
+                panel.SetActive(true);
+                if (restartButton != null) restartButton.SetActive(true);
+                if (nextButton != null) nextButton.SetActive(false);
+                if (timeCnt != null) timeCnt.isTimeOver = true;
+
+                PlayerController.gameState = "gameend";
+            }
+        }
         else if (PlayerController.gameState == "gameover")
         {
-            // 死亡時のボタン制御
+            // 既に復活試行済みでゲームオーバーのままなら通常UI表示
             mainImage.SetActive(false);
             panel.SetActive(true);
             if (restartButton != null) restartButton.SetActive(true);
             if (nextButton != null) nextButton.SetActive(false);
-
-            // タイマー停止
             if (timeCnt != null) timeCnt.isTimeOver = true;
 
             PlayerController.gameState = "gameend";
         }
         else if (PlayerController.gameState == "playing")
         {
-            // プレイヤーのスコア加算
+            // プレイヤーのスコア加算処理
             GameObject player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
             {
@@ -214,6 +256,8 @@ public class GameManager : MonoBehaviour
     // --- リスタートボタン処理 ---
     public void OnRestartButton()
     {
+        triedRevival = false;
+
         // 1. UI全部非表示
         if (panel != null) panel.SetActive(false);
         if (restartButton != null) restartButton.SetActive(false);
@@ -305,4 +349,46 @@ public class GameManager : MonoBehaviour
                 timeCnt.enabled = true;
         }
     }
+
+    IEnumerator PlayRevivalSequence()
+    {
+        if (player != null) player.SetActive(false);
+
+        if (videoCanvas != null) videoCanvas.SetActive(true);
+        if (videoPlayer != null)
+        {
+            videoPlayer.Stop();
+            videoPlayer.frame = 0;
+            videoPlayer.Prepare();
+            while (!videoPlayer.isPrepared) yield return null;
+            videoPlayer.Play();
+        }
+
+        while (videoPlayer != null && videoPlayer.isPlaying)
+            yield return null;
+
+        if (videoCanvas != null) videoCanvas.SetActive(false);
+
+        if (player != null)
+        {
+            // プレイヤーの位置をセット
+            player.transform.position = new Vector3(-8.97f, -0.29f, 0f);
+
+            // 一旦無効→次のフレームで有効にして物理演算を安定させる
+            yield return new WaitForFixedUpdate(); // ← これがポイント
+            player.SetActive(true);
+
+            // スプライト差し替え
+            SpriteRenderer sr = player.GetComponent<SpriteRenderer>();
+            if (sr != null && revivedSprite != null)
+                sr.sprite = revivedSprite;
+        }
+
+        // 状態復帰
+        if (timeCnt != null) timeCnt.isTimeOver = false;
+        PlayerController.gameState = "playing";
+    }
+
+
+
 }
