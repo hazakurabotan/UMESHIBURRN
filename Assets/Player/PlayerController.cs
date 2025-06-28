@@ -8,6 +8,7 @@ public class PlayerController : MonoBehaviour
     // Rigidbody2D（物理演算用コンポーネント）への参照
     Rigidbody2D rbody;
 
+
     // 横・縦方向の入力値（-1, 0, 1）
     float axisH = 0.0f;
     float axisV = 0.0f;
@@ -84,6 +85,8 @@ public class PlayerController : MonoBehaviour
     string nowAnime = "";
     string oldAnime = "";
 
+    public RuntimeAnimatorController PlayerAnime;
+
     // スコア・攻撃ダメージなど
     public int score = 0;
     public int bulletDamage = 1;
@@ -130,7 +133,11 @@ public class PlayerController : MonoBehaviour
         oldAnime = stopAnime;
         gameState = "playing";
 
-        
+        // --- ここがポイント！ ---
+        if (animator.runtimeAnimatorController == null && PlayerAnime != null)
+        {
+            animator.runtimeAnimatorController = PlayerAnime;
+        }
     }
 
     // --- 毎フレーム呼ばれる処理（プレイヤーの操作など） ---
@@ -324,6 +331,10 @@ public class PlayerController : MonoBehaviour
         {
             invincibleTimer -= Time.deltaTime;
         }
+
+        // ここはデバッグ用なのでテスト後は消してOK
+        if (animator != null)
+            Debug.Log("毎フレーム Controller名: " + animator.runtimeAnimatorController.name);
     }
 
     // --- ロープぶら下がり開始時に呼ぶ ---
@@ -527,11 +538,24 @@ public class PlayerController : MonoBehaviour
         GetComponent<CapsuleCollider2D>().enabled = false;
         rbody.AddForce(Vector2.up * 5, ForceMode2D.Impulse);
 
+        // 元: revivedOverrideController（PlayerControllerのメンバ変数）
+        // ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+        // 新: GameManager.Instance.revivedOverrideController
+        if (
+    GameManager.Instance != null &&
+    animator.runtimeAnimatorController == GameManager.Instance.revivedOverrideController &&
+    PlayerAnime != null)
+        {
+            animator.runtimeAnimatorController = PlayerAnime;
+            Debug.Log("死亡したのでPlayerAnimeに戻したよ！");
+        }
+
         if (audioSource != null && deathClip != null)
         {
             audioSource.PlayOneShot(deathClip);
         }
     }
+
 
     // --- 死亡時の移動停止 ---
     void GameStop()

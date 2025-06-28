@@ -14,6 +14,8 @@ public class GameManager : MonoBehaviour
     public Sprite normalSprite;
     public Sprite revivedSprite;
 
+    public RuntimeAnimatorController revivedOverrideController;
+
     public static bool fromRestart = false;
 
     public GameObject videoCanvas;         // 動画表示用Canvas
@@ -88,6 +90,8 @@ public class GameManager : MonoBehaviour
     // ---------------------- Start ----------------------
     void Start()
     {
+        ResetAllUI();
+
         StartCoroutine(InitAfterFrame());
 
 
@@ -299,6 +303,8 @@ public class GameManager : MonoBehaviour
         }
 
 
+
+
     }
 
     // --- カットイン画像を隠し、レーザー演出発射 ---
@@ -334,6 +340,8 @@ public class GameManager : MonoBehaviour
     // --- リスタートボタン処理 ---
     public void OnRestartButton()
     {
+        ResetAllUI();
+
         fromRestart = true;
 
         triedRevival = true;
@@ -357,6 +365,8 @@ public class GameManager : MonoBehaviour
     // --- ネクストボタン処理（次ステージへ） ---
     public void OnNextButton()
     {
+        ResetAllUI();
+
         if (panel != null) panel.SetActive(false);
         if (restartButton != null) restartButton.SetActive(false);
         if (nextButton != null) nextButton.SetActive(false);
@@ -405,6 +415,8 @@ public class GameManager : MonoBehaviour
     // --- シーン切替時にUI等をリセット ---
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        ResetAllUI();
+
         triedRevival = false;
         isReviving = false;
 
@@ -477,82 +489,129 @@ public class GameManager : MonoBehaviour
     {
         isReviving = true;
 
-        if (player != null)
+        // 1. 復活演出前にplayerとVideoCanvasを必ず再取得
+        player = GameObject.FindGameObjectWithTag("Player");
+        if (videoCanvas == null)
+            videoCanvas = GameObject.Find("VideoCanvas");
+        if (videoPlayer == null)
+            videoPlayer = FindObjectOfType<UnityEngine.Video.VideoPlayer>();
+
+        if (player == null)
         {
-            // RigidbodyとColliderを取得
-            Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
-            Collider2D col = player.GetComponent<Collider2D>();
-
-            // RigidbodyとColliderを一時停止
-            if (rb != null) rb.simulated = false;
-            if (col != null) col.enabled = false;
-
-            // 非表示化
-            player.SetActive(false);
+            Debug.LogError("復活演出時にplayerが見つからない！");
+            yield break;
         }
 
+        // 2. playerの物理とコライダーを停止・一時非表示
+        Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+        Collider2D col = player.GetComponent<Collider2D>();
+        if (rb != null) rb.simulated = false;
+        if (col != null) col.enabled = false;
+        player.SetActive(false);
+
+        // 3. VideoCanvasを表示（ここから演出）
         if (videoCanvas != null) videoCanvas.SetActive(true);
+
+        // 4. VideoPlayerで動画再生
         if (videoPlayer != null)
         {
-            videoPlayer.Stop();
-            videoPlayer.frame = 0;
-            videoPlayer.Prepare();
-            while (!videoPlayer.isPrepared) yield return null;
-            videoPlayer.Play();
+            // 動画クリップが設定されてるか要確認
+            if (videoPlayer.clip == null)
+            {
+                Debug.LogError("[復活] VideoPlayerのVideoClipが設定されていません！");
+            }
+            else
+            {
+                videoPlayer.Stop();
+                videoPlayer.frame = 0;
+                videoPlayer.Prepare();
+                // 準備できるまで待つ
+                while (!videoPlayer.isPrepared) yield return null;
+                videoPlayer.Play();
+                // 再生が終わるまで待つ
+                while (videoPlayer.isPlaying) yield return null;
+            }
+        }
+        else
+        {
+            Debug.LogError("[復活] VideoPlayerが見つかりません！");
         }
 
-        while (videoPlayer != null && videoPlayer.isPlaying)
-            yield return null;
-
+        // 5. 動画が終わったらVideoCanvasを隠す
         if (videoCanvas != null) videoCanvas.SetActive(false);
 
-        if (player != null)
+        // 6. キャラ復活処理
+        player.transform.position = new Vector3(-8.97f, 0.0f, 0f); // 必要に応じて座標調整
+
+        yield return new WaitForFixedUpdate();
+
+        // 物理＆コライダー再有効化
+        if (rb != null)
         {
-            Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
-            Collider2D col = player.GetComponent<Collider2D>();
-
-            // 位置を復活地点に設定（床にしっかり立つ高さを確認して設定！）
-            player.transform.position = new Vector3(-8.97f, 0.0f, 0f);
-
-            yield return new WaitForFixedUpdate(); // 物理エンジンの安定を待つ
-
-            // 物理再有効化
-            if (rb != null)
-            {
-                rb.velocity = Vector2.zero; // 落下速度をリセット
-                rb.simulated = true;
-            }
-
-            if (col != null) col.enabled = true;
-
-            player.SetActive(true);
-
-            // スプライト切り替え
-            SpriteRenderer sr = player.GetComponent<SpriteRenderer>();
-            if (sr != null && revivedSprite != null)
-                sr.sprite = revivedSprite;
+            rb.velocity = Vector2.zero;
+            rb.simulated = true;
         }
+        if (col != null) col.enabled = true;
+
+        player.SetActive(true);
+        yield return null;  // UI安定化のため
+
+        // 復活時スプライト切替
+        SpriteRenderer sr = player.GetComponent<SpriteRenderer>();
+        if (sr != null && revivedSprite != null)
+            sr.sprite = revivedSprite;
 
         if (timeCnt != null) timeCnt.isTimeOver = false;
         PlayerController.gameState = "playing";
 
-        if (restartButton != null)
-            restartButton.SetActive(false);
+        if (restartButton != null) restartButton.SetActive(false);
 
-        if (player != null)
+        // HP回復・UI更新
+        PlayerController pc = player.GetComponent<PlayerController>();
+        if (pc != null)
         {
-            PlayerController pc = player.GetComponent<PlayerController>();
-            if (pc != null)
-            {
-                pc.Heal(pc.maxHP);
-                pc.UpdateHpUI();
-            }
+            pc.Heal(pc.maxHP);
+            pc.UpdateHpUI();
         }
 
-        isReviving = false; // ★復活終了！
+        // アニメーションコントローラ切替
+        var animator = player.GetComponent<Animator>();
+        if (animator == null)
+            Debug.LogWarning("[復活] animatorがnullです！");
+        if (revivedOverrideController == null)
+            Debug.LogWarning("[復活] revivedOverrideControllerがnullです！");
 
+        if (animator != null && revivedOverrideController != null)
+        {
+            Debug.Log("[復活] 切り替え前 Controller名: " + animator.runtimeAnimatorController?.name);
+            animator.runtimeAnimatorController = revivedOverrideController;
+            Debug.Log("[復活] 切り替え後 Controller名: " + animator.runtimeAnimatorController?.name);
+            yield return null;
+            Debug.Log("[復活] 1フレーム後 Controller名: " + animator.runtimeAnimatorController?.name);
+            animator.Play("RePlayerMove");
+        }
+        else
+        {
+            Debug.LogWarning("[復活] animator or revivedOverrideController がnullなので切り替えスキップ！");
+        }
+
+        isReviving = false;
     }
 
+    void ResetAllUI()
+    {
+        if (videoCanvas != null) videoCanvas.SetActive(false);
+        if (videoPlayer != null)
+        {
+            videoPlayer.Stop();
+            videoPlayer.frame = 0;
+        }
+        if (mainImage != null) mainImage.SetActive(false);
+        if (panel != null) panel.SetActive(false);
+        if (restartButton != null) restartButton.SetActive(false);
+        if (nextButton != null) nextButton.SetActive(false);
+        // ...他にもリセットしたいUIがあればここで追加
+    }
 
 
 

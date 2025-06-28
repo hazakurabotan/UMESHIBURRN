@@ -270,8 +270,9 @@ MonoBehaviour:
   invincibleTime: 3
   audioSource: {fileID: 158573305089694368}
   deathClip: {fileID: 8300000, guid: 1a51af09bd88ae74aa175607c3ebaec9, type: 3}
-  hpBar: {fileID: 8702267915811785756, guid: 4c5691e0189b6ff49b1abe00c1e24d23, type: 3}
-  maxHP: 3
+  hpBar: {fileID: 0}
+  maxHP: 15
+  currentHP: 0
   dashSpeed: 9
   dashDoubleTapTime: 0.3
   afterImagePrefab: {fileID: 1931263073724592993, guid: a388e8f674c1e5d479246b11be724384, type: 3}
