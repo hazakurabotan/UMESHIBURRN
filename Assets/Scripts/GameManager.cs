@@ -44,6 +44,12 @@ public class GameManager : MonoBehaviour
     public AudioClip cutInVoiceClip;    // カットイン声
     public GameObject laserPrefab;      // レーザープレハブ
 
+
+    public int killCount = 0;                // 撃破数カウント
+    public int bulletLevel = 1;              // 弾レベル（1なら3発、2なら4発）
+    public GameObject levelUpPanel;          // レベルアップ用パネル（Canvas内のPanelを割当）
+    public PlayerShoot playerShoot;          // プレイヤーの弾撃ちスクリプトへの参照
+
     private bool isReviving = false;
 
     // アイテムパネル関連
@@ -140,6 +146,9 @@ public class GameManager : MonoBehaviour
         if (restartButton != null) restartButton.SetActive(false);
         if (nextButton != null) nextButton.SetActive(false);
 
+
+        if (levelUpPanel != null)
+            levelUpPanel.SetActive(false);
 
     }
 
@@ -302,9 +311,34 @@ public class GameManager : MonoBehaviour
             Invoke(nameof(HideCutIn), 1.0f); // 1秒後にHideCutInを呼ぶ
         }
 
+        if (levelUpPanel != null && levelUpPanel.activeSelf)
+        {
+            if (Input.GetKeyDown(KeyCode.Z))
+            {
+                CloseLevelUpPanel();
+            }
+        }
 
 
+    }
 
+    public void AddKill()
+    {
+        killCount++;
+        if (killCount == 10 && bulletLevel == 1)
+        {
+            bulletLevel = 2;
+            var playerShoot = player.GetComponent<PlayerShoot>();
+            if (playerShoot != null)
+            {
+                playerShoot.maxShots = 4;
+            }
+            if (levelUpPanel != null)
+                levelUpPanel.SetActive(true);
+
+            // ★ゲーム停止
+            Time.timeScale = 0f;
+        }
     }
 
     // --- カットイン画像を隠し、レーザー演出発射 ---
@@ -611,6 +645,15 @@ public class GameManager : MonoBehaviour
         if (restartButton != null) restartButton.SetActive(false);
         if (nextButton != null) nextButton.SetActive(false);
         // ...他にもリセットしたいUIがあればここで追加
+    }
+
+    public void CloseLevelUpPanel()
+    {
+        if (levelUpPanel != null)
+            levelUpPanel.SetActive(false);
+
+        // ★ゲーム再開
+        Time.timeScale = 1f;
     }
 
 

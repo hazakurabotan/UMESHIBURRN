@@ -10,6 +10,7 @@ public class PlayerShoot : MonoBehaviour
     [HideInInspector] public bool isCharging = false;
     public float requiredCharge = 2.0f;
 
+    
     public int maxShots = 3;             // 連射できる回数
     public float reloadTime = 1.0f;      // クールタイム
     private int shotsFired = 0;
@@ -67,6 +68,9 @@ public class PlayerShoot : MonoBehaviour
                 lastFireTime = Time.time;
             }
         }
+
+
+
     }
 
     void Shoot(bool powered)

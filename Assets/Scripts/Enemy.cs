@@ -31,6 +31,9 @@ public class Enemy : MonoBehaviour
         }
     }
 
+
+
+
     // ======= 連続ヒット解除用関数 =======
     private void ResetHit()
     {
@@ -40,6 +43,10 @@ public class Enemy : MonoBehaviour
     // ======= 死亡処理 =======
     private void Die()
     {
+        if (GameManager.Instance != null)
+            GameManager.Instance.AddKill();
+
+
         Destroy(gameObject); // このオブジェクト（敵）を消す
     }
 }
