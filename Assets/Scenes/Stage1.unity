@@ -2180,6 +2180,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1101128526
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1101128528}
+  - component: {fileID: 1101128527}
+  m_Layer: 0
+  m_Name: EnemySpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1101128527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1101128526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 799dbec037f670f4ebd5f70a80ef0e88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemyPrefab: {fileID: 2792608014359903621, guid: ff61d948cd77c294fad4163884e4fa86, type: 3}
+  spawnPoint: {fileID: 1663151193}
+  respawnDelay: 0.5
+--- !u!4 &1101128528
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1101128526}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -7.5209236, y: -1.5732353, z: 763.7215}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1112076310
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3156,6 +3203,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &1663151193 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1110562288944893761, guid: ff61d948cd77c294fad4163884e4fa86, type: 3}
+  m_PrefabInstance: {fileID: 2146689595}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1767940996
 GameObject:
   m_ObjectHideFlags: 0
@@ -4194,6 +4246,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HpPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 2023411775054573317, guid: 7fab208ab244d30408432dae8436c0e6, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6758650875943193619, guid: 7fab208ab244d30408432dae8436c0e6, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4309,3 +4365,4 @@ SceneRoots:
   - {fileID: 675003707}
   - {fileID: 21149344}
   - {fileID: 781197542}
+  - {fileID: 1101128528}

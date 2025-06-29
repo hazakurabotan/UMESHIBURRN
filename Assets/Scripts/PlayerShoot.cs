@@ -10,22 +10,44 @@ public class PlayerShoot : MonoBehaviour
     [HideInInspector] public bool isCharging = false;
     public float requiredCharge = 2.0f;
 
-    // ここでPlayerController参照を保持
+    public int maxShots = 3;             // 連射できる回数
+    public float reloadTime = 1.0f;      // クールタイム
+    private int shotsFired = 0;
+    private float lastFireTime = -99f;
+    private bool isReloading = false;
+
     PlayerController playerController;
 
     void Start()
     {
-        // 最初にキャッシュ（同じオブジェクトについてる前提）
         playerController = GetComponent<PlayerController>();
-        // もし別オブジェクトの場合はFindObjectOfType<PlayerController>()でも可
     }
 
     void Update()
     {
+        if (isReloading)
+        {
+            if (Time.time - lastFireTime > reloadTime)
+            {
+                shotsFired = 0;
+                isReloading = false;
+            }
+            return;
+        }
+
         if (Input.GetKeyDown(KeyCode.X))
         {
-            isCharging = true;
-            chargeTime = 0f;
+            if (shotsFired < maxShots)
+            {
+                isCharging = true;
+                chargeTime = 0f;
+            }
+            else
+            {
+                isReloading = true;
+                lastFireTime = Time.time;
+                // ここでバテSE・演出いれても◎
+            }
         }
 
         if (isCharging && Input.GetKey(KeyCode.X))
@@ -38,16 +60,20 @@ public class PlayerShoot : MonoBehaviour
             Shoot(chargeTime >= requiredCharge);
             isCharging = false;
             chargeTime = 0f;
+            shotsFired++;
+            if (shotsFired >= maxShots)
+            {
+                isReloading = true;
+                lastFireTime = Time.time;
+            }
         }
     }
 
     void Shoot(bool powered)
     {
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
-
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
         PlayerBullet pb = bullet.GetComponent<PlayerBullet>();
-
         float direction = transform.localScale.x > 0 ? 1f : -1f;
         if (rb != null)
             rb.velocity = new Vector2(direction * bulletSpeed, 0f);
@@ -55,13 +81,12 @@ public class PlayerShoot : MonoBehaviour
         if (pb != null)
         {
             int baseDamage = 1;
-            // プレイヤーの bulletDamage を参照
             if (playerController != null)
                 baseDamage = playerController.bulletDamage;
 
             if (powered)
             {
-                pb.damage = baseDamage + 2; // チャージ時は+2
+                pb.damage = baseDamage + 2;
                 bullet.transform.localScale *= 4f;
             }
             else
@@ -69,7 +94,6 @@ public class PlayerShoot : MonoBehaviour
                 pb.damage = baseDamage;
             }
         }
-
         Destroy(bullet, 3.0f);
     }
 }
