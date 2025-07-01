@@ -3229,7 +3229,7 @@ GameObject:
   - component: {fileID: 1142678490}
   - component: {fileID: 1142678492}
   - component: {fileID: 1142678491}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: sceneChange
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3264,7 +3264,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nextSceneName: Stage2
-  sceneName: Stage1
+  sceneName: BaseScene
 --- !u!61 &1142678492
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -3297,7 +3297,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.00000011920929, y: 1.087661}
+  m_Offset: {x: -2.044105, y: 1.093863}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -3308,7 +3308,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 3.6875432, y: 0.17821169}
+  m_Size: {x: 7.775753, y: 0.637135}
   m_EdgeRadius: 0
 --- !u!1 &1250835577
 GameObject:
@@ -4479,6 +4479,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bd402d7eb9a9274fad7ded00132a722, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player: {fileID: 0}
+  normalSprite: {fileID: 0}
+  revivedSprite: {fileID: 0}
+  revivedOverrideController: {fileID: 0}
+  videoCanvas: {fileID: 0}
+  videoPlayer: {fileID: 0}
+  revivalChance: 0.4
   itemSprites: []
   equippedItemId: -1
   mainImage: {fileID: 678896600}
@@ -4491,6 +4498,10 @@ MonoBehaviour:
   cutInAudioSource: {fileID: 0}
   cutInVoiceClip: {fileID: 8300000, guid: ecb46a82f76cebb40ae2fe03aa30b7fe, type: 3}
   laserPrefab: {fileID: 5688605582872764671, guid: 8f1a80d37fa239a43bf3f5a494944e71, type: 3}
+  killCount: 0
+  bulletLevel: 1
+  levelUpPanel: {fileID: 0}
+  playerShoot: {fileID: 0}
   itemDisplayPanel: {fileID: 2065927825}
   timeBar: {fileID: 405266662}
   timeText: {fileID: 405266660}
