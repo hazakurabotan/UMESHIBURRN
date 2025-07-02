@@ -2,53 +2,46 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// ----------------------------------------------
+// SaveController
+// シーンをまたいでも消えない「データ保持オブジェクト」
+// 例：イベント消費状況などをHashSetで管理
+// ----------------------------------------------
 public class SaveController : MonoBehaviour
 {
-    //自分地震をステックかして顕現することで自分の中の変数などを他のシーンに持ち越す準備
+    // --- シングルトン化（どのシーンでも1つだけ存在する仕組み）---
     public static SaveController instance;
 
-    //
-    public HashSet<(string tag,int arrangeId)> 
-        consumedEvent = new HashSet<(string tag,int arrangeId)>();
+    // --- （例）「タグ＋ID」で一度消費したイベントを記録するセット ---
+    public HashSet<(string tag, int arrangeId)>
+        consumedEvent = new HashSet<(string tag, int arrangeId)>();
 
     private void Awake()
     {
+        // まだ唯一のインスタンスが無い場合、自分を「唯一の」instanceとして保存
         if (instance == null)
         {
-            instance = this; //プログラム自身の情報をstatic変数に格納
-            DontDestroyOnLoad(gameObject); //sceneが切り替わってもオブジェクトをひきつぐ
+            instance = this;
+            DontDestroyOnLoad(gameObject); // シーン切り替えても消えない
         }
         else
         {
-            //2つめ移行のsceneControllerであることがかくていする
-            Destroy(gameObject); //ひとつのsceneで競合しないように自己破棄
+            // すでに他に1個ある場合は、自分は破棄（重複防止）
+            Destroy(gameObject);
         }
-
-
     }
 
-
-    // Start is called before the first frame update
-    void Start()
+    // --- 例：イベント消費を記録 ---
+    void ConsumedEvent(string tag, int arrangeId)
     {
-        
+        consumedEvent.Add((tag, arrangeId));
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    void ConsumedEvent(string tag,int arrangeId)
-    {
-        consumedEvent.Add((tag,arrangeId));
-    }
-
+    // --- 例：イベントがすでに消費済みか調べる ---
     bool IsConsumed(string tag, int arrangeId)
-
     {
         return consumedEvent.Contains((tag, arrangeId));
     }
 
+    // Start, Update は現状使っていない
 }

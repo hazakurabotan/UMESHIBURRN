@@ -1,84 +1,85 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;                       // TextMeshPro用
 using UnityEngine;
 using UnityEngine.SceneManagement;  // シーン切り替え用
 using UnityEngine.UI;              // UI制御用
-using TMPro;                       // TextMeshPro用
 
-// ゲーム全体の状態・UI・スコア・アイテム管理などを担う
+// ------------------------------------------------------
+// GameManager
+// ゲーム全体の進行・UI・アイテム・演出をまとめて管理する
+// シングルトン（ゲーム中で1個だけ存在）パターン
+// ------------------------------------------------------
 public class GameManager : MonoBehaviour
 {
+    // === 復活演出・プレイヤー ===
+    public GameObject player;                       // プレイヤー本体
+    public Sprite normalSprite;                     // 通常時スプライト
+    public Sprite revivedSprite;                    // 復活演出用スプライト
+    public RuntimeAnimatorController revivedOverrideController; // 復活用アニメコントローラー
 
-    // 復活演出関連
-    public GameObject player;
-    public Sprite normalSprite;
-    public Sprite revivedSprite;
+    public static bool fromRestart = false;         // リスタートからの遷移かフラグ
 
-    public RuntimeAnimatorController revivedOverrideController;
+    public GameObject videoCanvas;                  // 復活演出Canvas
+    public UnityEngine.Video.VideoPlayer videoPlayer; // 復活演出Video
+    public float revivalChance = 0.4f;              // 復活確率
+    private bool triedRevival = false;              // 復活を既に試したか
 
-    public static bool fromRestart = false;
+    // === シングルトン管理 ===
+    public static GameManager Instance;             // 唯一のインスタンス
 
-    public GameObject videoCanvas;         // 動画表示用Canvas
-    public UnityEngine.Video.VideoPlayer videoPlayer;
-    public float revivalChance = 0.4f;     // 復活確率
+    // === アイテム関連 ===
+    public Sprite[] itemSprites;                    // アイテム画像一覧
+    public int equippedItemId = -1;                 // 装備中アイテムID
 
-    private bool triedRevival = false;
+    // === UI要素 ===
+    public GameObject mainImage;                    // 勝利・敗北等の画像
+    public Sprite gameOverSpr;
+    public Sprite gameClearSpr;
+    public GameObject panel;                        // ボタンパネル
+    public GameObject restartButton;                // リスタートボタン
+    public GameObject nextButton;                   // ネクストボタン
+    public GameObject cutInImage;                   // カットイン画像
+    public AudioSource cutInAudioSource;            // カットイン用音
+    public AudioClip cutInVoiceClip;
+    public GameObject laserPrefab;                  // レーザー演出
 
+    // === ゲーム進行・成長関連 ===
+    public int killCount = 0;                       // 撃破数
+    public int bulletLevel = 1;                     // 弾のレベル
+    public GameObject levelUpPanel;                 // レベルアップ演出
+    public PlayerShoot playerShoot;                 // 弾発射スクリプト参照
 
-    // --- シングルトンパターン用 ---
-    public static GameManager Instance;
+    private bool isReviving = false;                // 復活演出中かどうか
 
-    // --- アイテム画像や状態の管理 ---
-    public Sprite[] itemSprites;        // アイテム画像リスト
-    public int equippedItemId = -1;     // 今装備中のアイテム番号
-
-    // ==== UI関連 ====
-    public GameObject mainImage;        // メイン画像（勝ち・負け等）
-    public Sprite gameOverSpr;          // ゲームオーバー画像
-    public Sprite gameClearSpr;         // クリア画像
-    public GameObject panel;            // ボタンなどをまとめたパネル
-    public GameObject restartButton;    // リスタート用ボタン
-    public GameObject nextButton;       // ネクスト用ボタン
-    public GameObject cutInImage;       // カットイン演出画像
-    public AudioSource cutInAudioSource;// カットイン音用
-    public AudioClip cutInVoiceClip;    // カットイン声
-    public GameObject laserPrefab;      // レーザープレハブ
-
-
-    public int killCount = 0;                // 撃破数カウント
-    public int bulletLevel = 1;              // 弾レベル（1なら3発、2なら4発）
-    public GameObject levelUpPanel;          // レベルアップ用パネル（Canvas内のPanelを割当）
-    public PlayerShoot playerShoot;          // プレイヤーの弾撃ちスクリプトへの参照
-
-    private bool isReviving = false;
-
-    // アイテムパネル関連
+    // === アイテムパネル ===
     public GameObject itemDisplayPanel;
     bool isItemPanelOpen = false;
 
-    // ステージ番号
+    // === ステージ管理 ===
     public static int currentStage = 1;
 
-    // タイマー関連
+    // === タイマー関連 ===
     public GameObject timeBar;
     public TextMeshProUGUI timeText;
-    TimeController timeCnt; // タイマー制御用スクリプト
+    TimeController timeCnt; // タイマー用スクリプト
 
-    // スコア管理
+    // === スコア管理 ===
     public TextMeshProUGUI scoreText;
-    public static int totalScore = 0; // 全体合計
-    public int stageScore = 0;        // ステージごと
+    public static int totalScore = 0; // 合計スコア
+    public int stageScore = 0;        // ステージごとスコア
 
-    // ---------------------- Awake ----------------------
-    // シングルトン初期化＆リソースのロード（1回のみ実行）
+    // ------------------------------------------------------
+    // Awake: シングルトン初期化、リソース読み込み
+    // ------------------------------------------------------
     void Awake()
     {
         if (Instance == null)
         {
-            Instance = this;  // ゲーム中1個だけに
-            DontDestroyOnLoad(this.gameObject); // シーンまたいでも消えない
+            Instance = this;                      // 唯一のインスタンスに
+            DontDestroyOnLoad(this.gameObject);   // シーン遷移でも消えない
 
-            // --- アイテム画像（Resourcesフォルダ）読み込み ---
+            // Resourcesフォルダからアイテムスプライトを読み込み
             List<Sprite> loaded = new List<Sprite>();
             for (int i = 0; i < 10; i++)
             {
@@ -89,70 +90,59 @@ public class GameManager : MonoBehaviour
         }
         else if (Instance != this)
         {
-            Destroy(this.gameObject); // 2個目以降は自動で削除
+            Destroy(this.gameObject); // 2個目は消す
         }
     }
 
-    // ---------------------- Start ----------------------
+    // ------------------------------------------------------
+    // Start: 各種UIと状態の初期化
+    // ------------------------------------------------------
     void Start()
     {
-        ResetAllUI();
+        ResetAllUI(); // 全UIを非表示などに初期化
 
-        StartCoroutine(InitAfterFrame());
+        StartCoroutine(InitAfterFrame()); // フレーム跨ぎの初期化
 
-
-        // --- 動画再生まわりを確実にOFF ---
-        if (videoCanvas != null) videoCanvas.SetActive(false); // Canvas非表示
+        // 復活用Canvasと動画は必ずオフに
+        if (videoCanvas != null) videoCanvas.SetActive(false);
         if (videoPlayer != null)
         {
             videoPlayer.Stop();
             videoPlayer.frame = 0;
         }
 
-        // 一時的にリスタートかどうかで復活処理を無効化
+        // リスタートから来たときは復活演出をスキップ
         if (fromRestart)
         {
             triedRevival = true;
-            fromRestart = false; // 忘れずリセット！
+            fromRestart = false;
         }
 
-        //
-        //if (player != null)
-        //{
-        //    PlayerController pc = player.GetComponent<PlayerController>();
-        //    if (pc != null)
-        //    {
-        //        pc.Heal(pc.maxHP);
-        //        pc.UpdateHpUI();
-        //    }
-        //}
-
-
-        // ステージ1ならcurrentStageを1に初期化
+        // ステージ番号初期化（Stage1シーンなら1に）
         if (SceneManager.GetActiveScene().name == "Stage1") currentStage = 1;
 
-        InactiveImage();         // mainImageを非表示
-        panel.SetActive(false);  // ボタンパネル非表示
+        InactiveImage(); // mainImage非表示
+        panel.SetActive(false);
 
-        // タイマー制御
+        // タイマー制御（0秒の場合は非表示）
         timeCnt = GetComponent<TimeController>();
         if (timeCnt != null && timeCnt.gameTime == 0.0f) timeBar.SetActive(false);
 
         // アイテムパネル非表示
         if (itemDisplayPanel != null) itemDisplayPanel.SetActive(false);
-        UpdateScore();   // スコアUI初期化
+        UpdateScore(); // スコアUI更新
 
-        // ボタン類も非表示
+        // ボタン類非表示
         if (restartButton != null) restartButton.SetActive(false);
         if (nextButton != null) nextButton.SetActive(false);
 
-
         if (levelUpPanel != null)
             levelUpPanel.SetActive(false);
-
     }
 
-
+    // ------------------------------------------------------
+    // フレーム跨ぎの初期化処理（HPバー再取得・復活演出など）
+    // ------------------------------------------------------
     IEnumerator InitAfterFrame()
     {
         yield return null;
@@ -171,18 +161,18 @@ public class GameManager : MonoBehaviour
                 {
                     pc.Heal(pc.maxHP);
 
-                    // HPバーの参照を明示的にリセット
+                    // HPバー参照がnullなら取得し直し
                     if (pc.hpBar == null)
                         pc.hpBar = FindObjectOfType<HpBarController>();
 
-                    yield return null; // 1フレーム待つとUIリンクが安定することがある
+                    yield return null; // UIがリンク安定するまで1フレーム待つ
                     pc.UpdateHpUI();
 
                     Debug.Log($"[RESTART] Player HP: {pc.currentHP} / Max: {pc.maxHP}, hpBar:{(pc.hpBar == null ? "NULL" : "OK")}");
                 }
             }
 
-            // 演出キャンバスをもう一度隠す（念のため）
+            // 復活演出キャンバス非表示
             if (videoCanvas != null)
                 videoCanvas.SetActive(false);
 
@@ -196,67 +186,75 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
-
-    // ---------------------- Update ----------------------
+    // ------------------------------------------------------
+    // Update: ゲーム進行・UI制御・スコア・演出など
+    // ------------------------------------------------------
     void Update()
     {
-
-
-        // --- タイマーのUI表示 ---
+        // タイマーUI更新
         if (timeCnt != null && timeText != null)
         {
             timeText.text = Mathf.CeilToInt(timeCnt.displayTime).ToString("D3");
         }
 
-        // --- ゲーム進行状況に応じたUI制御 ---
+        // ゲームクリア時のUI
         if (PlayerController.gameState == "gameclear")
         {
-            // クリア時のボタン制御
             mainImage.SetActive(false);
             panel.SetActive(true);
             if (restartButton != null) restartButton.SetActive(false);
             if (nextButton != null) nextButton.SetActive(true);
 
-            // タイマー停止＆スコア加算
+            // タイムボーナス＆スコア加算
             if (timeCnt != null)
             {
                 timeCnt.isTimeOver = true;
                 int time = (int)timeCnt.displayTime;
-                totalScore += time * 10; // タイムボーナス
+                totalScore += time * 10;
             }
             totalScore += stageScore;
             stageScore = 0;
             UpdateScore();
 
-            // 状態遷移
             PlayerController.gameState = "gameend";
         }
+        // ゲームオーバー＆復活判定
+        // プレイヤーがやられた時に、復活演出を行うかどうかを決定する部分
         else if (PlayerController.gameState == "gameover" && !triedRevival && !isReviving)
         {
+            // もう一度復活判定を行わないようにフラグを立てる
             triedRevival = true;
 
+            // 復活確率（revivalChance, 例:0.4）より小さいランダム値なら…
             if (Random.value < revivalChance)
             {
+                // 復活演出コルーチンを実行（PlayRevivalSequenceが走る）
                 StartCoroutine(PlayRevivalSequence());
             }
             else
             {
-                // 復活に失敗したときだけ表示！
-                mainImage.SetActive(false);
-                panel.SetActive(true);
+                // 復活失敗の場合はゲームオーバー用のUIを表示
+
+                mainImage.SetActive(false);       // メイン画像を非表示
+                panel.SetActive(true);            // ボタンパネルを表示
+
+                // リスタートボタンはON、ネクストボタンはOFF
                 if (restartButton != null) restartButton.SetActive(true);
                 if (nextButton != null) nextButton.SetActive(false);
+
+                // タイマーも止める（時間切れ扱い）
                 if (timeCnt != null) timeCnt.isTimeOver = true;
 
+                // ゲーム状態を"gameend"に切り替え
                 PlayerController.gameState = "gameend";
             }
         }
+
+        // 2回目以降のゲームオーバーUI
         else if (PlayerController.gameState == "gameover")
         {
-            if (isReviving) return; // ★復活中なら何もしない！
+            if (isReviving) return;
 
-            // 既に復活試行済みでゲームオーバーのままなら通常UI表示
             mainImage.SetActive(false);
             panel.SetActive(true);
             if (restartButton != null) restartButton.SetActive(true);
@@ -265,10 +263,10 @@ public class GameManager : MonoBehaviour
 
             PlayerController.gameState = "gameend";
         }
-
+        // プレイ中
         else if (PlayerController.gameState == "playing")
         {
-            // プレイヤーのスコア加算処理
+            // プレイヤーのスコア加算
             GameObject player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
             {
@@ -282,7 +280,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // --- アイテムパネルの開閉 ---
+        // アイテムパネル開閉（左Shiftで開く、Xで閉じる）
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
             if (itemDisplayPanel != null)
@@ -300,7 +298,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // --- カットイン（Sキー） ---
+        // カットイン演出（Sキー）
         if (Input.GetKeyDown(KeyCode.S))
         {
             cutInImage.SetActive(true);
@@ -308,9 +306,10 @@ public class GameManager : MonoBehaviour
             {
                 cutInAudioSource.PlayOneShot(cutInVoiceClip);
             }
-            Invoke(nameof(HideCutIn), 1.0f); // 1秒後にHideCutInを呼ぶ
+            Invoke(nameof(HideCutIn), 1.0f);
         }
 
+        // レベルアップパネルが出ていればZキーで閉じる
         if (levelUpPanel != null && levelUpPanel.activeSelf)
         {
             if (Input.GetKeyDown(KeyCode.Z))
@@ -318,85 +317,111 @@ public class GameManager : MonoBehaviour
                 CloseLevelUpPanel();
             }
         }
-
-
     }
 
+    // --- 敵撃破時のカウント＆レベルアップ処理 ---
+    // 敵を倒したときに呼び出す関数
     public void AddKill()
     {
+        // 撃破数を1つ増やす
         killCount++;
+
+        // もし10体撃破かつ弾レベルが1のとき
         if (killCount == 10 && bulletLevel == 1)
         {
+            // 弾レベルを2に上げる（例：連射数アップなど）
             bulletLevel = 2;
+
+            // プレイヤーのPlayerShootスクリプトを取得
             var playerShoot = player.GetComponent<PlayerShoot>();
             if (playerShoot != null)
             {
+                // 弾の最大同時発射数を4発に変更
                 playerShoot.maxShots = 4;
             }
+
+            // レベルアップ演出用パネル（UI）を表示
             if (levelUpPanel != null)
                 levelUpPanel.SetActive(true);
 
-            // ★ゲーム停止
+            // ★ここでゲームを一時停止（演出中だけ進行ストップ）
             Time.timeScale = 0f;
         }
     }
 
-    // --- カットイン画像を隠し、レーザー演出発射 ---
+
+    // --- カットインを隠してレーザー演出 ---
     void HideCutIn()
     {
         cutInImage.SetActive(false);
         FireLaser();
     }
 
-    // --- プレイヤーの位置からレーザーを発射 ---
+    // --- レーザーをプレイヤーの位置から発射 ---
+    // プレイヤーの位置＆向きに合わせてレーザーオブジェクトを出現させる関数
     void FireLaser()
     {
+        // シーン上の"Player"タグ付きオブジェクトを探す
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null) return;
+        if (player == null) return; // 見つからなければ何もしない
+
+        // プレイヤーの現在位置
         Vector3 pos = player.transform.position;
+        // プレイヤーの向き（ローカルスケールXが＋で右、－で左向き）
         float dir = player.transform.localScale.x;
+        // レーザーの長さ
         float length = 1.3f;
-        GameObject laserObj = Instantiate(laserPrefab, pos + new Vector3(5f * dir, 0, 0), Quaternion.identity);
+
+        // プレイヤーの少し前方（5fぶん前）にレーザーを出現させる
+        GameObject laserObj = Instantiate(
+            laserPrefab,                     // プレハブ
+            pos + new Vector3(5f * dir, 0, 0), // 発射位置（向きに応じて左右）
+            Quaternion.identity              // 回転はデフォルト
+        );
+
+        // レーザーのスケール（長さ）を調整
         Vector3 scale = laserObj.transform.localScale;
-        scale.x = length;
-        if (dir < 0) scale.x *= -1;
+        scale.x = length; // x軸（横方向）のサイズを指定長さに
+        if (dir < 0) scale.x *= -1; // 左向きなら反転
+
         laserObj.transform.localScale = scale;
+
+        // レーザーの中央がちょうど"前"に来るように、さらに位置を微調整
         laserObj.transform.position += new Vector3((length / 2f) * dir, 0, 0);
-        Destroy(laserObj, 0.6f); // 0.6秒で削除
+
+        // レーザーオブジェクトを0.6秒後に自動削除（演出終了）
+        Destroy(laserObj, 0.6f);
     }
 
-    // --- mainImageを隠すだけ ---
+
+
+    // --- mainImage（勝利・敗北画像）を非表示にするだけ ---
     void InactiveImage()
     {
         mainImage.SetActive(false);
     }
 
-    // --- リスタートボタン処理 ---
+    // --- リスタートボタンで再スタート ---
     public void OnRestartButton()
     {
         ResetAllUI();
-
         fromRestart = true;
-
         triedRevival = true;
 
-        // 1. UI全部非表示
         if (panel != null) panel.SetActive(false);
         if (restartButton != null) restartButton.SetActive(false);
         if (nextButton != null) nextButton.SetActive(false);
         if (mainImage != null) mainImage.SetActive(false);
 
-        // 2. タイマーリセット
         if (timeCnt != null)
         {
             timeCnt.ResetTimer();
         }
-
-        // 3. シーン再読込でプレイヤーなどもリセット
+        // シーンを再読み込み
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    // --- ネクストボタン処理（次ステージへ） ---
+    // --- ネクストボタンで次ステージへ ---
     public void OnNextButton()
     {
         ResetAllUI();
@@ -406,7 +431,6 @@ public class GameManager : MonoBehaviour
         if (nextButton != null) nextButton.SetActive(false);
         if (mainImage != null) mainImage.SetActive(false);
 
-        // タイマーリセット
         if (timeCnt != null)
         {
             timeCnt.ResetTimer();
@@ -419,72 +443,77 @@ public class GameManager : MonoBehaviour
             SceneManager.LoadScene("ResultScene");
     }
 
-    // --- スコアUIの更新 ---
+    // --- スコアUIを更新 ---
     void UpdateScore()
     {
         int score = stageScore + totalScore;
         if (scoreText != null) scoreText.text = score.ToString();
     }
 
-    // --- 今装備してるアイテムのスプライトを取得 ---
+    // --- 現在装備中のアイテム画像（Sprite）を返す ---
+    // 今プレイヤーが装備しているアイテムのスプライト画像を返す関数
     public Sprite GetEquippedSprite()
     {
+        // アイテム画像配列が存在していて、装備IDも配列の範囲内なら
         if (itemSprites != null && equippedItemId >= 0 && equippedItemId < itemSprites.Length)
+            // 装備中IDに対応するスプライトを返す
             return itemSprites[equippedItemId];
+
+        // 条件を満たさなければ（装備なしや不正ID）はnullを返す
         return null;
     }
 
-    // --- アイテムパネルが開いているかどうかを返す ---
+
+    // --- アイテムパネルが開いているか判定 ---
     public bool IsItemPanelOpen()
     {
         return itemDisplayPanel != null && itemDisplayPanel.activeSelf;
     }
 
-    // --- シーン切替時のイベント登録 ---
+    // --- シーン切り替え時のイベント登録 ---
     void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    // --- シーン切替時にUI等をリセット ---
+    // --- シーン切り替え時のUI・状態リセット ---
+    // 新しいシーンが読み込まれたときに呼ばれる
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        ResetAllUI();
+        ResetAllUI(); // まず全UIを初期化＆非表示
 
+        // 復活判定フラグもリセット
         triedRevival = false;
         isReviving = false;
 
-
-        // アイテムパネルなど全部非表示
-        if (itemDisplayPanel != null)
-            itemDisplayPanel.SetActive(false);
+        // --- UI要素をすべて非表示に ---
+        if (itemDisplayPanel != null) itemDisplayPanel.SetActive(false); // アイテムパネル
         isItemPanelOpen = false;
-        if (panel != null) panel.SetActive(false);
-        if (restartButton != null) restartButton.SetActive(false);
-        if (nextButton != null) nextButton.SetActive(false);
-        if (mainImage != null) mainImage.SetActive(false);
+        if (panel != null) panel.SetActive(false);            // ボタンパネル
+        if (restartButton != null) restartButton.SetActive(false); // リスタートボタン
+        if (nextButton != null) nextButton.SetActive(false);      // ネクストボタン
+        if (mainImage != null) mainImage.SetActive(false);        // メイン画像
 
-        // タイマーのリセット
-        if (timeCnt == null)
-            timeCnt = GetComponent<TimeController>();
-
+        // --- タイマーのリセット ---
+        if (timeCnt == null) timeCnt = GetComponent<TimeController>(); // 取得し直し
         if (timeCnt != null)
         {
-            timeCnt.ResetTimer();
-            timeCnt.isTimeOver = false;
-            // ショップシーンのみタイマーを止める（例：scene名に"Shop"が入ってたら）
+            timeCnt.ResetTimer();         // タイマー値初期化
+            timeCnt.isTimeOver = false;   // タイマーを再開状態に
+                                          // ショップシーンだけタイマー停止（ショップでは時間経過しない仕様）
             if (scene.name.Contains("Shop"))
                 timeCnt.enabled = false;
             else
                 timeCnt.enabled = true;
         }
 
-        // プレイヤー取得して体力全回復
+        // --- リスタートから来た場合、プレイヤー復活＆UI再リンク ---
         if (fromRestart)
         {
-            triedRevival = true;
-            fromRestart = false;
+            triedRevival = true; // 復活判定済みにする
+            fromRestart = false; // フラグリセット
 
+            // プレイヤー再取得
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
             if (playerObj != null)
             {
@@ -492,8 +521,10 @@ public class GameManager : MonoBehaviour
                 PlayerController pc = player.GetComponent<PlayerController>();
                 if (pc != null)
                 {
+                    // HPバー再リンク（Scene遷移で一度切れることがあるため）
                     pc.hpBar = FindObjectOfType<HpBarController>();
 
+                    // プレイヤー体力全回復＆UIも更新
                     pc.Heal(pc.maxHP);
                     pc.UpdateHpUI();
 
@@ -501,55 +532,55 @@ public class GameManager : MonoBehaviour
                 }
             }
 
-            // videoCanvas/videoPlayerの再取得（万一に備えて）
+            // --- 復活演出CanvasやVideoPlayerも再取得・初期化 ---
             if (videoCanvas == null)
-                videoCanvas = GameObject.Find("videoCanvas"); // 名前は正確に
-
-            videoCanvas?.SetActive(false);
+                videoCanvas = GameObject.Find("videoCanvas");
+            videoCanvas?.SetActive(false); // ついてたら必ず非表示
 
             if (videoPlayer == null)
                 videoPlayer = FindObjectOfType<UnityEngine.Video.VideoPlayer>();
-
             videoPlayer?.Stop();
-            videoPlayer.frame = 0;
+            videoPlayer.frame = 0; // 再生位置を頭に戻す
 
-            // 明示的に gameState を playing にしておく（念のため）
+            // ゲーム状態を必ず"playing"に戻す（復活完了！）
             PlayerController.gameState = "playing";
         }
-
     }
 
+
+    // --- プレイヤー復活演出（動画再生など含む） ---
+    // 復活用の動画を流して演出し、プレイヤーを復活させるコルーチン
     IEnumerator PlayRevivalSequence()
     {
-        isReviving = true;
+        isReviving = true; // 演出中フラグON（同時多重実行防止）
 
-        // 1. 復活演出前にplayerとVideoCanvasを必ず再取得
+        // プレイヤーや動画関連のオブジェクトを再取得
         player = GameObject.FindGameObjectWithTag("Player");
         if (videoCanvas == null)
             videoCanvas = GameObject.Find("VideoCanvas");
         if (videoPlayer == null)
             videoPlayer = FindObjectOfType<UnityEngine.Video.VideoPlayer>();
 
+        // プレイヤーが見つからなければエラーで中断
         if (player == null)
         {
             Debug.LogError("復活演出時にplayerが見つからない！");
             yield break;
         }
 
-        // 2. playerの物理とコライダーを停止・一時非表示
+        // --- 物理挙動とコライダーを一時停止、プレイヤー非表示 ---
         Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
         Collider2D col = player.GetComponent<Collider2D>();
-        if (rb != null) rb.simulated = false;
-        if (col != null) col.enabled = false;
-        player.SetActive(false);
+        if (rb != null) rb.simulated = false;  // 物理停止
+        if (col != null) col.enabled = false;  // 当たり判定OFF
+        player.SetActive(false);               // 完全に非表示
 
-        // 3. VideoCanvasを表示（ここから演出）
+        // --- 復活動画キャンバスを表示 ---
         if (videoCanvas != null) videoCanvas.SetActive(true);
 
-        // 4. VideoPlayerで動画再生
+        // --- 復活動画を再生 ---
         if (videoPlayer != null)
         {
-            // 動画クリップが設定されてるか要確認
             if (videoPlayer.clip == null)
             {
                 Debug.LogError("[復活] VideoPlayerのVideoClipが設定されていません！");
@@ -558,12 +589,10 @@ public class GameManager : MonoBehaviour
             {
                 videoPlayer.Stop();
                 videoPlayer.frame = 0;
-                videoPlayer.Prepare();
-                // 準備できるまで待つ
-                while (!videoPlayer.isPrepared) yield return null;
-                videoPlayer.Play();
-                // 再生が終わるまで待つ
-                while (videoPlayer.isPlaying) yield return null;
+                videoPlayer.Prepare();                 // 準備（非同期）
+                while (!videoPlayer.isPrepared) yield return null; // 準備できるまで待つ
+                videoPlayer.Play();                    // 再生開始
+                while (videoPlayer.isPlaying) yield return null;   // 終わるまで待つ
             }
         }
         else
@@ -571,36 +600,36 @@ public class GameManager : MonoBehaviour
             Debug.LogError("[復活] VideoPlayerが見つかりません！");
         }
 
-        // 5. 動画が終わったらVideoCanvasを隠す
+        // --- 動画が終わったらキャンバスを非表示に ---
         if (videoCanvas != null) videoCanvas.SetActive(false);
 
-        // 6. キャラ復活処理
-        player.transform.position = new Vector3(-8.97f, 0.0f, 0f); // 必要に応じて座標調整
+        // --- プレイヤーを所定の位置に戻す（例：ステージ左端など）---
+        player.transform.position = new Vector3(-8.97f, 0.0f, 0f);
 
-        yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate(); // 物理処理安定用
 
-        // 物理＆コライダー再有効化
+        // --- プレイヤーの物理・コライダー・表示を復活 ---
         if (rb != null)
         {
-            rb.velocity = Vector2.zero;
-            rb.simulated = true;
+            rb.velocity = Vector2.zero;   // 移動をリセット
+            rb.simulated = true;          // 物理再開
         }
-        if (col != null) col.enabled = true;
+        if (col != null) col.enabled = true; // 当たり判定ON
 
         player.SetActive(true);
-        yield return null;  // UI安定化のため
+        yield return null; // 1フレーム待機（UI安定化）
 
-        // 復活時スプライト切替
+        // --- スプライトを「復活時バージョン」に切り替え ---
         SpriteRenderer sr = player.GetComponent<SpriteRenderer>();
         if (sr != null && revivedSprite != null)
             sr.sprite = revivedSprite;
 
+        // --- タイマー再開＆リスタートボタン非表示 ---
         if (timeCnt != null) timeCnt.isTimeOver = false;
         PlayerController.gameState = "playing";
-
         if (restartButton != null) restartButton.SetActive(false);
 
-        // HP回復・UI更新
+        // --- HP全回復・UI更新 ---
         PlayerController pc = player.GetComponent<PlayerController>();
         if (pc != null)
         {
@@ -608,7 +637,7 @@ public class GameManager : MonoBehaviour
             pc.UpdateHpUI();
         }
 
-        // アニメーションコントローラ切替
+        // --- 復活アニメーションコントローラに切り替え ---
         var animator = player.GetComponent<Animator>();
         if (animator == null)
             Debug.LogWarning("[復活] animatorがnullです！");
@@ -620,42 +649,51 @@ public class GameManager : MonoBehaviour
             Debug.Log("[復活] 切り替え前 Controller名: " + animator.runtimeAnimatorController?.name);
             animator.runtimeAnimatorController = revivedOverrideController;
             Debug.Log("[復活] 切り替え後 Controller名: " + animator.runtimeAnimatorController?.name);
-            yield return null;
+            yield return null; // コントローラ切り替え後は1フレーム待つ
             Debug.Log("[復活] 1フレーム後 Controller名: " + animator.runtimeAnimatorController?.name);
-            animator.Play("RePlayerMove");
+            animator.Play("RePlayerMove"); // 復活用アニメ再生
         }
         else
         {
             Debug.LogWarning("[復活] animator or revivedOverrideController がnullなので切り替えスキップ！");
         }
 
-        isReviving = false;
+        isReviving = false; // 演出中フラグOFF
     }
 
+
+    // --- すべてのUIを非表示＆初期化 ---
+    // ゲームリスタートやシーン切り替え時にUIを一度リセットするための関数
     void ResetAllUI()
     {
+        // 復活演出用Canvasを非表示
         if (videoCanvas != null) videoCanvas.SetActive(false);
+
+        // 動画プレイヤーがあれば停止＆再生位置リセット
         if (videoPlayer != null)
         {
             videoPlayer.Stop();
             videoPlayer.frame = 0;
         }
-        if (mainImage != null) mainImage.SetActive(false);
-        if (panel != null) panel.SetActive(false);
-        if (restartButton != null) restartButton.SetActive(false);
-        if (nextButton != null) nextButton.SetActive(false);
-        // ...他にもリセットしたいUIがあればここで追加
+
+        // メイン画像・パネル・ボタン類も全部非表示
+        if (mainImage != null) mainImage.SetActive(false);       // 勝敗画像など
+        if (panel != null) panel.SetActive(false);               // ボタンパネル
+        if (restartButton != null) restartButton.SetActive(false); // リスタートボタン
+        if (nextButton != null) nextButton.SetActive(false);     // ネクストボタン
+                                                                 // 他にも非表示にしたいUIがあればここに追加
     }
 
+    // --- レベルアップ演出を閉じる＆ゲーム再開 ---
+    // レベルアップ演出中だけ一時停止していたゲーム進行を再開する関数
     public void CloseLevelUpPanel()
     {
+        // レベルアップ用パネル（UI）を非表示
         if (levelUpPanel != null)
             levelUpPanel.SetActive(false);
 
-        // ★ゲーム再開
+        // 一時停止していたゲームを再開
         Time.timeScale = 1f;
     }
-
-
 
 }
