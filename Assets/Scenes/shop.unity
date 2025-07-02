@@ -775,6 +775,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HpBarPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 7195490282054025739, guid: 4c5691e0189b6ff49b1abe00c1e24d23, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

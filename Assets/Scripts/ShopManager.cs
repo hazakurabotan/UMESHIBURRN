@@ -78,9 +78,8 @@ public class ShopManager : MonoBehaviour
     // ====== 会話を終了して次のシーンへ遷移 ======
     IEnumerator EndTalk()
     {
-        twText.ShowText("それでいい？じゃあがんばって");
-        yield return WaitZ();
-        SceneTransitionInfo.cameFromShop = true; // ショップから来たフラグを立てる
+        yield return WaitTextAndZ("それでいい？じゃあがんばって");
+        SceneTransitionInfo.cameFromShop = true;
         UnityEngine.SceneManagement.SceneManager.LoadScene("Stage2");
     }
 
@@ -90,4 +89,12 @@ public class ShopManager : MonoBehaviour
         while (!Input.GetKeyDown(KeyCode.Z))
             yield return null;
     }
+
+    IEnumerator WaitTextAndZ(string text)
+    {
+        twText.ShowText(text);
+        yield return new WaitUntil(() => twText.isCompleted); // 全文出るまで待つ
+        yield return WaitZ(); // Zを押すまで待つ
+    }
+
 }
