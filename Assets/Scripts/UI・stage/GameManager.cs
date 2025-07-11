@@ -39,10 +39,12 @@ public class GameManager : MonoBehaviour
     public GameObject panel;                        // ボタンパネル
     public GameObject restartButton;                // リスタートボタン
     public GameObject nextButton;                   // ネクストボタン
-    public GameObject cutInImage;                   // カットイン画像
+    public Image cutInImage;                    // カットイン画像
     public AudioSource cutInAudioSource;            // カットイン用音
     public AudioClip cutInVoiceClip;
     public GameObject laserPrefab;                  // レーザー演出
+    public Sprite railgunCutinSprite;
+
 
     // === ゲーム進行・成長関連 ===
     public int killCount = 0;                       // 撃破数
@@ -301,12 +303,11 @@ public class GameManager : MonoBehaviour
         // カットイン演出（Sキー）
         if (Input.GetKeyDown(KeyCode.S))
         {
-            cutInImage.SetActive(true);
+            ShowCutIn(); // ←こっちに差し替える！
             if (cutInAudioSource != null && cutInVoiceClip != null)
             {
                 cutInAudioSource.PlayOneShot(cutInVoiceClip);
             }
-            Invoke(nameof(HideCutIn), 1.0f);
         }
 
         // レベルアップパネルが出ていればZキーで閉じる
@@ -352,10 +353,11 @@ public class GameManager : MonoBehaviour
 
     // --- カットインを隠してレーザー演出 ---
     void HideCutIn()
-    {
-        cutInImage.SetActive(false);
-        FireLaser();
-    }
+{
+    if (cutInImage != null)
+        cutInImage.gameObject.SetActive(false);
+    FireLaser();
+}
 
     // --- レーザーをプレイヤーの位置から発射 ---
     // プレイヤーの位置＆向きに合わせてレーザーオブジェクトを出現させる関数
@@ -661,6 +663,21 @@ public class GameManager : MonoBehaviour
         isReviving = false; // 演出中フラグOFF
     }
 
+    void ShowCutIn()
+    {
+        Debug.Log("ShowCutIn呼ばれた cutInImage=" + (cutInImage != null) + " railgunCutinSprite=" + (railgunCutinSprite != null));
+        if (cutInImage != null && railgunCutinSprite != null)
+        {
+            cutInImage.sprite = railgunCutinSprite;
+            cutInImage.gameObject.SetActive(true);
+            Debug.Log("カットイン表示！！ Sprite名:" + railgunCutinSprite.name);
+            Invoke(nameof(HideCutIn), 1.0f);
+        }
+        else
+        {
+            Debug.LogWarning("cutInImageまたはrailgunCutinSpriteが設定されてません！");
+        }
+    }
 
     // --- すべてのUIを非表示＆初期化 ---
     // ゲームリスタートやシーン切り替え時にUIを一度リセットするための関数

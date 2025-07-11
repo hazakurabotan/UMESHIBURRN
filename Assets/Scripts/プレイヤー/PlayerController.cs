@@ -84,6 +84,8 @@ public class PlayerController : MonoBehaviour
     public string deadAnime = "PlayerOver";
     string nowAnime = "";
     string oldAnime = "";
+    public GameObject punchHitbox;
+
 
     public RuntimeAnimatorController PlayerAnime;
 
@@ -249,6 +251,9 @@ public class PlayerController : MonoBehaviour
                 transform.localScale = new Vector2(wallJumpDirection, 1);
                 transform.position += new Vector3(wallJumpDirection * 0.2f, 0, 0);
             }
+
+          
+
         }
 
         // --- ぶら下がり振り子アクション中 ---
@@ -335,6 +340,15 @@ public class PlayerController : MonoBehaviour
         // ここはデバッグ用なのでテスト後は消してOK
         if (animator != null)
             Debug.Log("毎フレーム Controller名: " + animator.runtimeAnimatorController.name);
+
+
+        if (Input.GetKeyDown(KeyCode.V) && animator != null)
+        {
+            animator.SetTrigger("Punch");
+            StartCoroutine(PunchAttack());
+        }
+
+
     }
 
     // --- ロープぶら下がり開始時に呼ぶ ---
@@ -605,4 +619,13 @@ public class PlayerController : MonoBehaviour
         hpBar.SetHp(currentHP, maxHP);
     }
 
+    IEnumerator PunchAttack()
+    {
+        // パンチ中は無敵
+        invincibleTimer = 0.2f;  // パンチアニメの長さ分
+        punchHitbox.GetComponent<Collider2D>().enabled = true;
+        yield return new WaitForSeconds(0.15f); // パンチの判定持続時間
+        punchHitbox.GetComponent<Collider2D>().enabled = false;
+        // パンチ終わったらinvincibleTimerが切れるまで自動で無敵解除
+    }
 }
