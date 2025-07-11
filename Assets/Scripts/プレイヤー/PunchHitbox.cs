@@ -9,11 +9,15 @@ public class PunchHitbox : MonoBehaviour
         if (other.CompareTag("Enemy"))
         {
             Enemy enemy = other.GetComponent<Enemy>();
-            if (enemy != null)
+            if (enemy != null) enemy.TakeDamage(punchDamage);
+        }
+        if (other.CompareTag("EnemyBullet"))
+        {
+            Rigidbody2D rb = other.GetComponent<Rigidbody2D>();
+            if (rb != null)
             {
-                enemy.TakeDamage(punchDamage);
-                // 1î≠Ç≈âΩâÒÇ‡ìñÇΩÇÁÇ»Ç¢ÇÊÇ§Ç…ÇµÇΩÇ¢Ç»ÇÁÅAÇ±Ç±Ç≈ñ≥å¯âªÇ‡
-                // gameObject.SetActive(false); // or ColliderÇñ≥å¯Ç…
+                rb.velocity = -rb.velocity;
+                other.tag = "PlayerBullet";
             }
         }
     }

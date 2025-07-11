@@ -64,4 +64,16 @@ public class Enemy : MonoBehaviour
 
         Destroy(gameObject); // このオブジェクト（敵）を消す
     }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("PlayerBullet"))
+        {
+            TakeDamage(2);
+            Destroy(other.gameObject);
+        }
+        // ...ほかの処理
+    }
+
+
 }
