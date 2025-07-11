@@ -5,6 +5,15 @@ using UnityEngine;
 // 敵キャラクターの移動・反転・制御用スクリプト
 public class EnemyController : MonoBehaviour
 {
+
+    public GameObject bulletPrefab;
+    public float bulletSpeed = 6f;
+    public float shootInterval = 2.0f;
+    private float shootTimer = 0f;
+    private Transform player;
+
+    public Transform firePoint;  
+
     public float speed = 3.0f;           // 敵の移動速度
     public bool isToRight = false;       // true=右向き、false=左向き（初期値）
     public float revTime = 0f;           // 一定時間ごとに自動で反転したい時の間隔（0なら自動反転なし）
@@ -24,6 +33,12 @@ public class EnemyController : MonoBehaviour
         {
             transform.localScale = new Vector2(-1, 1);
         }
+
+        // プレイヤーのTransformを取得
+        GameObject p = GameObject.FindGameObjectWithTag("Player");
+        if (p != null)
+            player = p.transform;
+
     }
 
     void Update()
@@ -39,6 +54,32 @@ public class EnemyController : MonoBehaviour
                 // 見た目も左右反転（localScale.xを切り替え）
                 transform.localScale = isToRight ? new Vector2(-1, 1) : new Vector2(1, 1);
             }
+        }
+
+        if (player != null)
+        {
+            shootTimer += Time.deltaTime;
+            if (shootTimer >= shootInterval)
+            {
+                ShootToPlayer();
+                shootTimer = 0f;
+            }
+        }
+
+
+    }
+
+
+    void ShootToPlayer()
+    {
+        Debug.Log("敵が弾を発射しようとしています！");
+        Vector2 dir = (player.position - transform.position).normalized;
+        Vector3 shootPos = firePoint != null ? firePoint.position : transform.position; // ←ここ！
+        GameObject bullet = Instantiate(bulletPrefab, shootPos, Quaternion.identity);
+        Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.velocity = dir * bulletSpeed;
         }
     }
 

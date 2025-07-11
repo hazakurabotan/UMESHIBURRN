@@ -16,6 +16,8 @@ TagManager:
   - Boss
   - Talk
   - effect
+  - Wall
+  - EnemyBullet
   layers:
   - Default
   - TransparentFX
