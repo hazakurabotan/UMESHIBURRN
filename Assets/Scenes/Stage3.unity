@@ -2704,29 +2704,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 158573305089694368, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
-      propertyPath: MinDistance
-      value: 0.8731334
-      objectReference: {fileID: 0}
     - target: {fileID: 3315595117534700997, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
       propertyPath: m_Name
       value: Player
-      objectReference: {fileID: 0}
-    - target: {fileID: 4145816249211607875, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
-      propertyPath: m_Size.x
-      value: 0.70344114
-      objectReference: {fileID: 0}
-    - target: {fileID: 4145816249211607875, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
-      propertyPath: m_Size.y
-      value: 1.7454838
-      objectReference: {fileID: 0}
-    - target: {fileID: 4145816249211607875, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
-      propertyPath: m_Offset.x
-      value: 0.1525662
-      objectReference: {fileID: 0}
-    - target: {fileID: 4145816249211607875, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
-      propertyPath: m_Offset.y
-      value: 0.028553307
       objectReference: {fileID: 0}
     - target: {fileID: 9009474615085610478, guid: d6984ede4b93327449bb61f7126c6c6c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10584,6 +10564,7 @@ MonoBehaviour:
   cutInAudioSource: {fileID: 0}
   cutInVoiceClip: {fileID: 0}
   laserPrefab: {fileID: 0}
+  railgunCutinSprite: {fileID: 0}
   killCount: 0
   bulletLevel: 1
   levelUpPanel: {fileID: 0}
@@ -10642,6 +10623,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5aa8961956ce9843a114e4b0b345822, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bulletPrefab: {fileID: 0}
+  bulletSpeed: 6
+  shootInterval: 2
+  firePoint: {fileID: 0}
   speed: 3
   isToRight: 0
   revTime: 0

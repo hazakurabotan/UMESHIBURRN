@@ -217,8 +217,8 @@ CapsuleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.050845623, y: 0.025110364}
-  m_Size: {x: 0.5, y: 1.7523696}
+  m_Offset: {x: 0.1525662, y: 0.028553307}
+  m_Size: {x: 0.70344114, y: 1.7454838}
   m_Direction: 0
 --- !u!95 &8263035534988202668
 Animator:
@@ -343,7 +343,7 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 1
+  MinDistance: 0.8731334
   MaxDistance: 500
   Pan2D: 0
   rolloffMode: 0
@@ -509,6 +509,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2672335237641654642, guid: 885543fbcba01cb42ab50dba60c42f00, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7305665488869523181, guid: 885543fbcba01cb42ab50dba60c42f00, type: 3}
+      propertyPath: m_Color.a
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7353924416176666552, guid: 885543fbcba01cb42ab50dba60c42f00, type: 3}
