@@ -37,6 +37,12 @@ public class MegaManCamera : MonoBehaviour
             currentScreenOrigin.x += screenWidth; // 1画面右へ
             MoveCamera();
         }
+        //
+        // if (playerPos.y > currentScreenOrigin.y + screenHeight) {
+        //     currentScreenOrigin.y += screenHeight;
+        //     MoveCamera();
+        // }
+
 
         // -------- 縦方向の区画移動（必要なら追加）--------
         // プレイヤーが下端を出た

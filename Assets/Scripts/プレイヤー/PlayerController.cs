@@ -337,7 +337,7 @@ public class PlayerController : MonoBehaviour
             invincibleTimer -= Time.deltaTime;
         }
 
-        // ここはデバッグ用なのでテスト後は消してOK
+        // ここはデバッグ用なのでテスト後は消す
         if (animator != null)
             Debug.Log("毎フレーム Controller名: " + animator.runtimeAnimatorController.name);
 
@@ -347,6 +347,28 @@ public class PlayerController : MonoBehaviour
             animator.SetTrigger("Punch");
             StartCoroutine(PunchAttack());
         }
+
+        if (Input.GetKeyDown(KeyCode.F) && animator != null)
+        {
+            animator.SetTrigger("yowaPunch");
+            StartCoroutine(PunchAttack());
+        }
+
+        if (Input.GetKeyDown(KeyCode.H) && animator != null)
+        {
+            animator.SetTrigger("UpaaaPunch");
+            StartCoroutine(PunchAttack());
+        }
+
+        if (Input.GetKeyDown(KeyCode.G) && animator != null)
+        {
+            animator.SetTrigger("DunkPunch");
+            StartCoroutine(PunchAttack());
+        }
+
+
+
+
 
 
     }
