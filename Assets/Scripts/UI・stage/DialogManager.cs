@@ -32,9 +32,9 @@ public class DialogManager : MonoBehaviour
     bool isTalking = false;                // 会話中かどうか
 
     // --- 会話終了後に表示・起動するもの ---
-    public GameObject wallLeft;            // 左側の壁（ボス戦開始用）
-    public GameObject wallRight;           // 右側の壁
-    public GameObject bossHPPanel;         // ボスのHPバー
+    public GameObject stage2WallLeft;            // 左側の壁（ボス戦開始用）
+    public GameObject stage2WallRight;           // 右側の壁
+    public GameObject BossHpBarPanel;         // ボスのHPバー
     public TextMeshProUGUI bossHPText;     // ボスHPの数字表示（未使用でもOK）
 
     // --- 毎フレーム呼ばれる ---
@@ -46,6 +46,18 @@ public class DialogManager : MonoBehaviour
             NextSentence();
         }
     }
+
+    void Start()
+    {
+        dialogPanel.SetActive(false); // シーン開始直後は非表示
+
+        // 参照切れ対策: 名前で探す
+        if (stage2WallLeft == null) stage2WallLeft = GameObject.Find("WallLeft");
+        if (stage2WallRight == null) stage2WallRight = GameObject.Find("WallRight");
+        if (BossHpBarPanel == null) BossHpBarPanel = GameObject.Find("BossHPPanel");
+    }
+
+
 
     // === 会話開始の関数（他スクリプトから呼ばれる） ===
     public void StartDialog(DialogLine[] lines)
@@ -100,9 +112,9 @@ public class DialogManager : MonoBehaviour
         isTalking = false;              // 会話中フラグOFF
 
         // 壁やボスHPバーを表示してボス戦開始準備
-        if (wallLeft != null) wallLeft.SetActive(true);
-        if (wallRight != null) wallRight.SetActive(true);
-        if (bossHPPanel != null) bossHPPanel.SetActive(true);
+        if (stage2WallLeft != null) stage2WallLeft.SetActive(true);
+        if (stage2WallRight != null) stage2WallRight.SetActive(true);
+        if (BossHpBarPanel != null) BossHpBarPanel.SetActive(true);
 
         // ボスを動かす（isActiveをtrueにする）
         FindObjectOfType<BossSimpleJump>().isActive = true;
@@ -110,3 +122,5 @@ public class DialogManager : MonoBehaviour
         FindObjectOfType<PlayerController>().enabled = true;
     }
 }
+
+

@@ -51,6 +51,11 @@ public class PlayerController : MonoBehaviour
     float invincibleTimer = 0f;
     public float invincibleTime = 3f;
 
+    public GameObject summon01;
+    public Transform firePoint;
+
+
+
     // 死亡時の音・体力バーUI
     public AudioSource audioSource;
     public AudioClip deathClip;
@@ -256,6 +261,13 @@ public class PlayerController : MonoBehaviour
 
         }
 
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            GameObject go = Instantiate(summon01, firePoint.position, Quaternion.identity);
+            // playerはセットしない。これでOK！
+        }
+
+
         // --- ぶら下がり振り子アクション中 ---
         if (isHanging)
         {
@@ -337,9 +349,7 @@ public class PlayerController : MonoBehaviour
             invincibleTimer -= Time.deltaTime;
         }
 
-        // ここはデバッグ用なのでテスト後は消す
-        if (animator != null)
-            Debug.Log("毎フレーム Controller名: " + animator.runtimeAnimatorController.name);
+      
 
 
         if (Input.GetKeyDown(KeyCode.V) && animator != null)
