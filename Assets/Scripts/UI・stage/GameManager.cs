@@ -44,6 +44,8 @@ public class GameManager : MonoBehaviour
     public AudioClip cutInVoiceClip;
     public GameObject laserPrefab;                  // レーザー演出
     public Sprite railgunCutinSprite;
+    public static bool isPaused = false;
+    public GameObject pausePanel;
 
 
     // === ゲーム進行・成長関連 ===
@@ -318,6 +320,13 @@ public class GameManager : MonoBehaviour
                 CloseLevelUpPanel();
             }
         }
+
+        // EnterキーでポーズON/OFF
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            TogglePause();
+        }
+
     }
 
     // --- 敵撃破時のカウント＆レベルアップ処理 ---
@@ -353,11 +362,11 @@ public class GameManager : MonoBehaviour
 
     // --- カットインを隠してレーザー演出 ---
     void HideCutIn()
-{
-    if (cutInImage != null)
-        cutInImage.gameObject.SetActive(false);
-    FireLaser();
-}
+    {
+        if (cutInImage != null)
+            cutInImage.gameObject.SetActive(false);
+        FireLaser();
+    }
 
     // --- レーザーをプレイヤーの位置から発射 ---
     // プレイヤーの位置＆向きに合わせてレーザーオブジェクトを出現させる関数
@@ -487,6 +496,8 @@ public class GameManager : MonoBehaviour
         // 復活判定フラグもリセット
         triedRevival = false;
         isReviving = false;
+
+        cutInAudioSource = GameObject.Find("うめしばオーディオソース")?.GetComponent<AudioSource>();
 
         // --- UI要素をすべて非表示に ---
         if (itemDisplayPanel != null) itemDisplayPanel.SetActive(false); // アイテムパネル
@@ -711,6 +722,15 @@ public class GameManager : MonoBehaviour
 
         // 一時停止していたゲームを再開
         Time.timeScale = 1f;
+    }
+
+
+    void TogglePause()
+    {
+        bool willPause = Time.timeScale > 0f;
+        Time.timeScale = willPause ? 0f : 1f;
+        if (pausePanel != null)
+            pausePanel.SetActive(willPause);
     }
 
 }

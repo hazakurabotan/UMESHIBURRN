@@ -11,7 +11,7 @@ public class Enemy : MonoBehaviour
     private bool recentlyHit = false;  // 連続ヒット防止用フラグ
 
     // ======= ダメージ処理 =======
-    public void TakeDamage(int amount)
+    public void TakeDamage(int amount, string cause = "other")
     {
         // 連続ヒット防止（攻撃の当たり判定を一瞬だけ無効化）
         if (recentlyHit) return;               // すでにヒット判定中なら何もしない
@@ -28,7 +28,7 @@ public class Enemy : MonoBehaviour
         // HPが0以下になったら死亡処理
         if (hp <= 0)
         {
-            Die();
+            Die(cause);
         }
     }
 
@@ -42,34 +42,32 @@ public class Enemy : MonoBehaviour
     }
 
     // ======= 死亡処理 =======
-    private void Die()
+    private void Die(string cause)
     {
-        // 1. ドロップ用：アイテムプレハブ3つ登録用の配列を用意
-        // （Inspectorからセットする。publicにしておく）
-        // public GameObject[] dropItemPrefabs; ← 上に追記する
-
-        // 2. 50%確率でランダムドロップ
+        // 1. ドロップ
         if (dropItemPrefabs != null && dropItemPrefabs.Length > 0)
         {
             if (Random.value < 0.5f)
             {
-                int itemType = Random.Range(0, dropItemPrefabs.Length); // 0,1,2どれか
+                int itemType = Random.Range(0, dropItemPrefabs.Length);
                 Instantiate(dropItemPrefabs[itemType], transform.position, Quaternion.identity);
             }
         }
 
-        // 3. 既存の「キル数加算」
-        if (GameManager.Instance != null)
+        // 2. キルカウント
+        if (cause == "gun" && GameManager.Instance != null)
             GameManager.Instance.AddKill();
+        // summonや他の手段ではカウントしない
 
-        Destroy(gameObject); // このオブジェクト（敵）を消す
+        Destroy(gameObject);
     }
+
 
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("PlayerBullet"))
         {
-            TakeDamage(2);
+            TakeDamage(2, "gun");
             Destroy(other.gameObject);
         }
         // ...ほかの処理

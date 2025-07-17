@@ -54,7 +54,9 @@ public class PlayerController : MonoBehaviour
     public GameObject summon01;
     public Transform firePoint;
 
-
+    private int comboStep = 0;
+    private float comboTimer = 0f;
+    public float comboTimeout = 0.6f; // 連打受付時間（短めにしてもOK）
 
     // 死亡時の音・体力バーUI
     public AudioSource audioSource;
@@ -349,30 +351,51 @@ public class PlayerController : MonoBehaviour
             invincibleTimer -= Time.deltaTime;
         }
 
-      
+
+        // パンチ入力判定
+        if (Input.GetKeyDown(KeyCode.F) && animator != null)
+        {
+            // どのコンボ段階かでTriggerを撃つ
+            if (comboStep == 0)
+                animator.SetTrigger("yowaPunchAnimation");       // 最初
+            else if (comboStep == 1)
+                animator.SetTrigger("PunchAnimation");         // 2段目
+            else if (comboStep == 2)
+                animator.SetTrigger("UpaaaPunchAnimation");       // 3段目
+            else if (comboStep == 3)
+                animator.SetTrigger("DunkPunchAnimation");       // 4段目
+
+            comboStep++;
+            comboTimer = comboTimeout;
+            StartCoroutine(PunchAttack());
+        }
+
+        // タイムアウトでコンボリセット
+        if (comboStep > 0)
+        {
+            comboTimer -= Time.deltaTime;
+            if (comboTimer <= 0f)
+            {
+                comboStep = 0;
+            }
+        }
+
 
 
         if (Input.GetKeyDown(KeyCode.V) && animator != null)
         {
-            animator.SetTrigger("Punch");
-            StartCoroutine(PunchAttack());
-        }
-
-        if (Input.GetKeyDown(KeyCode.F) && animator != null)
-        {
-            animator.SetTrigger("yowaPunch");
+            animator.SetTrigger("PunchAnimation");
             StartCoroutine(PunchAttack());
         }
 
         if (Input.GetKeyDown(KeyCode.H) && animator != null)
         {
-            animator.SetTrigger("UpaaaPunch");
+            animator.SetTrigger("UpaaaPunchAnimation");
             StartCoroutine(PunchAttack());
         }
-
         if (Input.GetKeyDown(KeyCode.G) && animator != null)
         {
-            animator.SetTrigger("DunkPunch");
+            animator.SetTrigger("DunkPunchAnimation");
             StartCoroutine(PunchAttack());
         }
 

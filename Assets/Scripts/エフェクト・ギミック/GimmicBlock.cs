@@ -16,7 +16,7 @@ public class GimmicBlock : MonoBehaviour
     // ===== ゲーム開始時に一度だけ呼ばれる =====
     void Start()
     {
-        Debug.Log("GimmicBlock is alive! " + gameObject.name);
+
 
         // Rigidbody2Dの物理挙動を一時停止（静止状態にする）
         Rigidbody2D rbody = GetComponent<Rigidbody2D>();
@@ -28,7 +28,7 @@ public class GimmicBlock : MonoBehaviour
     // ===== 毎フレーム呼ばれる =====
     void Update()
     {
-        Debug.Log("GimmicBlock is alive! " + gameObject.name);
+
 
         // タグ"Player"がついたオブジェクト（プレイヤー）を探す
         GameObject player = GameObject.FindGameObjectWithTag("Player");

@@ -29,7 +29,7 @@ public class PlayerBullet : MonoBehaviour
             Enemy enemy = other.GetComponent<Enemy>(); // Enemyスクリプト取得
             if (enemy != null)
             {
-                enemy.TakeDamage(damage); // 敵にダメージを与える
+                enemy.TakeDamage(2, "gun"); // 敵にダメージを与える
             }
 
             Destroy(this.gameObject); // 弾を消す

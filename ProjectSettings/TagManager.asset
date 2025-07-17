@@ -18,6 +18,7 @@ TagManager:
   - effect
   - Wall
   - EnemyBullet
+  - Summon
   layers:
   - Default
   - TransparentFX
@@ -27,8 +28,8 @@ TagManager:
   - UI
   - Shell
   - Wall
-  - 
-  - 
+  - Player
+  - Summon
   - 
   - 
   - 

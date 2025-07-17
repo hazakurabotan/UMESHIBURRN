@@ -72,7 +72,7 @@ public class EnemyController : MonoBehaviour
 
     void ShootToPlayer()
     {
-        Debug.Log("“G‚ª’e‚ğ”­Ë‚µ‚æ‚¤‚Æ‚µ‚Ä‚¢‚Ü‚·I");
+        
         Vector2 dir = (player.position - transform.position).normalized;
         Vector3 shootPos = firePoint != null ? firePoint.position : transform.position; // ©‚±‚±I
         GameObject bullet = Instantiate(bulletPrefab, shootPos, Quaternion.identity);

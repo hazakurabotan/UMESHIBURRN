@@ -8,6 +8,8 @@ public class BossTrigger : MonoBehaviour
     public DialogManager dialogManager;       // 会話管理スクリプト（Inspectorでアサイン）
     public DialogLine[] dialogLines;          // イベントで再生するセリフ一覧（Inspectorで登録）
 
+
+
     bool hasTriggered = false;                // 既に発動済みかどうかのフラグ（2重発動防止）
 
     // 他のコライダーがこのオブジェクトに入ったときに呼ばれる
@@ -16,6 +18,21 @@ public class BossTrigger : MonoBehaviour
         if (!hasTriggered && other.CompareTag("Player"))
         {
             hasTriggered = true;
+
+            // ★ここでHierarchy中のDialogManager全部出す
+            Debug.Log("【BossTrigger】トリガー発動時に存在するDialogManager↓");
+            foreach (var dm in FindObjectsOfType<DialogManager>())
+            {
+                Debug.Log("DialogManager: " + dm.gameObject.name);
+            }
+
+            var allDialogManagers = FindObjectsOfType<DialogManager>();
+            Debug.Log($"【DialogManagerチェック】FindObjectsOfType<DialogManager>().Length = {allDialogManagers.Length}");
+            foreach (var dm in allDialogManagers)
+            {
+                Debug.Log($"DialogManager名: {dm.name} / 親: {dm.transform.parent?.name}");
+            }
+
 
             boss.isActive = false;
             FindObjectOfType<PlayerController>().enabled = false;

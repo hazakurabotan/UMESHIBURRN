@@ -26,6 +26,8 @@ public class DialogManager : MonoBehaviour
     public TextMeshProUGUI nameText;       // 発言者名表示用
     public Image iconImage;                // 発言者アイコン用
 
+    public TimeController timeController;
+
     // --- 会話データ ---
     public DialogLine[] dialogLines;       // 会話内容の配列（Inspectorで編集もOK）
     int currentSentence = 0;               // 今表示しているセリフの番号
@@ -49,12 +51,29 @@ public class DialogManager : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("【DialogManager Start】Scene内に存在するDialogManager一覧↓");
+        foreach (var dm in FindObjectsOfType<DialogManager>())
+        {
+            Debug.Log("DialogManager: " + dm.gameObject.name);
+        }
+
+        var allDialogManagers = FindObjectsOfType<DialogManager>();
+        Debug.Log($"【DialogManagerチェック】FindObjectsOfType<DialogManager>().Length = {allDialogManagers.Length}");
+        foreach (var dm in allDialogManagers)
+        {
+            Debug.Log($"DialogManager名: {dm.name} / 親: {dm.transform.parent?.name}");
+        }
+
+
         dialogPanel.SetActive(false); // シーン開始直後は非表示
 
         // 参照切れ対策: 名前で探す
         if (stage2WallLeft == null) stage2WallLeft = GameObject.Find("WallLeft");
         if (stage2WallRight == null) stage2WallRight = GameObject.Find("WallRight");
         if (BossHpBarPanel == null) BossHpBarPanel = GameObject.Find("BossHPPanel");
+
+        if (timeController == null)
+            timeController = FindObjectOfType<TimeController>();
     }
 
 
@@ -66,11 +85,15 @@ public class DialogManager : MonoBehaviour
         var player = GameObject.FindWithTag("Player");
         if (player != null)
         {
+
             var rb = player.GetComponent<Rigidbody2D>();
             var pc = player.GetComponent<PlayerController>();
             if (rb != null) rb.velocity = Vector2.zero;   // 慣性ストップ
             if (pc != null) pc.enabled = false;           // プレイヤー操作を止める
         }
+
+        if (timeController != null)
+            timeController.enabled = false;
 
         dialogLines = lines;      // 会話データをセット
         currentSentence = 0;     // 最初の行から
@@ -111,10 +134,15 @@ public class DialogManager : MonoBehaviour
         dialogPanel.SetActive(false);   // 会話ウィンドウを隠す
         isTalking = false;              // 会話中フラグOFF
 
+        if (timeController != null)
+            timeController.enabled = true;
+
         // 壁やボスHPバーを表示してボス戦開始準備
         if (stage2WallLeft != null) stage2WallLeft.SetActive(true);
         if (stage2WallRight != null) stage2WallRight.SetActive(true);
         if (BossHpBarPanel != null) BossHpBarPanel.SetActive(true);
+
+
 
         // ボスを動かす（isActiveをtrueにする）
         FindObjectOfType<BossSimpleJump>().isActive = true;
