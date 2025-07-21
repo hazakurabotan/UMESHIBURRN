@@ -34,9 +34,9 @@ public class DialogManager : MonoBehaviour
     bool isTalking = false;                // 会話中かどうか
 
     // --- 会話終了後に表示・起動するもの ---
-    public GameObject stage2WallLeft;            // 左側の壁（ボス戦開始用）
-    public GameObject stage2WallRight;           // 右側の壁
-    public GameObject BossHpBarPanel;         // ボスのHPバー
+    //public GameObject stage2WallLeft;            // 左側の壁（ボス戦開始用）
+    //public GameObject stage2WallRight;           // 右側の壁
+    public GameObject BossPanel;         // ボスのHPバー
     public TextMeshProUGUI bossHPText;     // ボスHPの数字表示（未使用でもOK）
 
     // --- 毎フレーム呼ばれる ---
@@ -68,9 +68,9 @@ public class DialogManager : MonoBehaviour
         dialogPanel.SetActive(false); // シーン開始直後は非表示
 
         // 参照切れ対策: 名前で探す
-        if (stage2WallLeft == null) stage2WallLeft = GameObject.Find("WallLeft");
-        if (stage2WallRight == null) stage2WallRight = GameObject.Find("WallRight");
-        if (BossHpBarPanel == null) BossHpBarPanel = GameObject.Find("BossHPPanel");
+        //if (stage2WallLeft == null) stage2WallLeft = GameObject.Find("WallLeft");
+        //if (stage2WallRight == null) stage2WallRight = GameObject.Find("WallRight");
+        if (BossPanel == null) BossPanel = GameObject.Find("BossPanel");
 
         if (timeController == null)
             timeController = FindObjectOfType<TimeController>();
@@ -138,16 +138,24 @@ public class DialogManager : MonoBehaviour
             timeController.enabled = true;
 
         // 壁やボスHPバーを表示してボス戦開始準備
-        if (stage2WallLeft != null) stage2WallLeft.SetActive(true);
-        if (stage2WallRight != null) stage2WallRight.SetActive(true);
-        if (BossHpBarPanel != null) BossHpBarPanel.SetActive(true);
+        //if (stage2WallLeft != null) stage2WallLeft.SetActive(true);
+        //if (stage2WallRight != null) stage2WallRight.SetActive(true);
+        if (BossPanel != null) BossPanel.SetActive(true);
 
 
 
-        // ボスを動かす（isActiveをtrueにする）
-        FindObjectOfType<BossSimpleJump>().isActive = true;
+        var boss = FindObjectOfType<BossSimpleJump>();
+        if (boss != null)
+            boss.isActive = true;
+        else
+            Debug.LogWarning("BossSimpleJumpが見つかりませんでした！");
+
         // プレイヤー操作も再び有効化
-        FindObjectOfType<PlayerController>().enabled = true;
+        var player = FindObjectOfType<PlayerController>();
+        if (player != null)
+            player.enabled = true;
+        else
+            Debug.LogWarning("PlayerControllerが見つかりませんでした！");
     }
 }
 

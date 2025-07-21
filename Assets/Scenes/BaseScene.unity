@@ -3265,7 +3265,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8125715419195072807, guid: 71f63fb265f0a1e42916318fbc0790cd, type: 3}
       propertyPath: nextSceneName
-      value: Scenes/Stage2
+      value: Stage2 copy
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

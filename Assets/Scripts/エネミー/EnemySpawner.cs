@@ -49,7 +49,7 @@ public class EnemySpawner : MonoBehaviour
         else
         {
             // スポーン場所が指定されていないとき警告を出す
-            Debug.LogWarning("スポーンポイントが設定されていません！");
+           // Debug.LogWarning("スポーンポイントが設定されていません！");
         }
     }
 

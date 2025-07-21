@@ -12,6 +12,7 @@ public class EnemyController : MonoBehaviour
     private float shootTimer = 0f;
     private Transform player;
 
+
     public Transform firePoint;  
 
     public float speed = 3.0f;           // “G‚ÌˆÚ“®‘¬“x
@@ -40,6 +41,8 @@ public class EnemyController : MonoBehaviour
             player = p.transform;
 
     }
+    
+
 
     void Update()
     {

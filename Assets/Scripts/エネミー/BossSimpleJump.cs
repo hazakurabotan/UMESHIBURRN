@@ -22,10 +22,10 @@ public class BossSimpleJump : MonoBehaviour
     private SpriteRenderer sr;        // SpriteRendererコンポーネント（見た目用）
 
     // HPバー（外部からアサイン）
-    public BossHpBarController bossHpBar;
+    public BossHpBarController BossHpPanel;
 
     // ======= HP管理 =======
-    public int maxHP = 10;            // ボスの最大HP
+    public int maxHP = 15;            // ボスの最大HP
     int currentHP;                    // 現在のHP
 
     // ======= 初期化 =======
@@ -38,8 +38,8 @@ public class BossSimpleJump : MonoBehaviour
         state = 0;
 
         // HPバーがあれば初期HPを反映
-        if (bossHpBar != null)
-            bossHpBar.SetHp(currentHP);
+        if (BossHpPanel != null)
+            BossHpPanel.SetHp(currentHP);
     }
 
     // ======= 毎フレーム呼ばれる処理 =======
@@ -126,8 +126,8 @@ public class BossSimpleJump : MonoBehaviour
         currentHP = Mathf.Clamp(currentHP, 0, maxHP);
 
         // HPバーにも反映
-        if (bossHpBar != null)
-            bossHpBar.SetHp(currentHP);
+        if (BossHpPanel != null)
+            BossHpPanel.SetHp(currentHP);
 
         // デバッグ表示
         Debug.Log("現在のボスHP: " + currentHP);

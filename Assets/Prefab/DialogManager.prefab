@@ -52,6 +52,7 @@ MonoBehaviour:
   dialogText: {fileID: 0}
   nameText: {fileID: 0}
   iconImage: {fileID: 0}
+  timeController: {fileID: 0}
   dialogLines: []
   stage2WallLeft: {fileID: 0}
   stage2WallRight: {fileID: 0}

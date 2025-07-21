@@ -4,11 +4,21 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     public int hp = 3;               // 敵の体力（HP）
+    public int maxHp = 3;
     public GameObject[] dropItemPrefabs;
     public bool isGrabbed = false;   // 掴まれている状態か（つかみアクション用フラグ）
     public bool isFlying = false;    // 飛んでいる状態か（投げられ中など）
-
+    public EnemyHpBarController hpBar;
     private bool recentlyHit = false;  // 連続ヒット防止用フラグ
+
+
+    void Start()
+    {
+        // 開始時に最大HPをセット
+        if (hpBar != null)
+            hpBar.SetHp(hp, maxHp);
+    }
+
 
     // ======= ダメージ処理 =======
     public void TakeDamage(int amount, string cause = "other")
@@ -23,7 +33,8 @@ public class Enemy : MonoBehaviour
 
         // HPを減らす
         hp -= amount;
-        Debug.Log("Enemyに " + amount + " ダメージ！ 現在HP: " + hp);
+        if (hpBar != null)
+            hpBar.SetHp(hp, maxHp);
 
         // HPが0以下になったら死亡処理
         if (hp <= 0)

@@ -12,10 +12,10 @@ public class BossHpBarController : MonoBehaviour
     public Sprite[] hpSprites;
 
     // ボスの最大HP
-    public int maxHp = 10;
+    public int maxHp = 15;
 
     // 現在のHP（初期値は最大値）
-    public int currentHp = 10;
+    public int currentHp = 15;
 
     // HPを設定し、HPバー画像も更新する関数
     // 例: SetHp(7) ならHPバーを「7」の画像に切り替える
