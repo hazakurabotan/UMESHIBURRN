@@ -18,6 +18,13 @@ public class PersonaMenuDetail : MonoBehaviour
     public Image detailImage;
     public TextMeshProUGUI detailTitle;
     public TextMeshProUGUI detailText;
+    public GameObject WeaponListPanel;
+    public GameObject AccessoryListPanel;
+    public GameObject SkillListPanel;
+    public GameObject MissionListPanel;
+    public GameObject OptionListPanel;
+    public GameObject SaveListPanel;
+    public GameObject TitleListPanel;
 
     public MenuDetail[] details;     // ƒƒjƒ…[€–Ú‚²‚Æ‚ÌÚ×
 
@@ -42,6 +49,16 @@ public class PersonaMenuDetail : MonoBehaviour
         detailImage.sprite = data.detailImage;
         detailTitle.text = data.detailTitle;
         detailText.text = data.detailText;
+
+        WeaponListPanel.SetActive(menuIndex == 0);
+        AccessoryListPanel.SetActive(menuIndex == 1);
+        SkillListPanel.SetActive(menuIndex == 2);
+        MissionListPanel.SetActive(menuIndex == 3);
+        OptionListPanel.SetActive(menuIndex == 4);
+        SaveListPanel.SetActive(menuIndex == 5);
+        TitleListPanel.SetActive(menuIndex == 6);
+
+
 
         // DOTween‚Å‚¿‚å‚Á‚Æ“®‚©‚µ‚½‚¢‚Æ‚«
         detailPanel.transform.localScale = Vector3.one * 0.8f;
